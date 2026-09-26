@@ -54,6 +54,24 @@ node --import ./scripts/sites-env.mjs node_modules/wrangler/bin/wrangler.js depl
 Nie wykonuj migracji ponownie przy aktualizacji Workera. Banery są przechowywane w R2,
 więc kopie rozgrywek w D1 ich nie obejmują.
 
+### Automatyczna publikacja Workera `rtl`
+
+Workflow `.github/workflows/deploy-rtl.yml` uruchamia się po każdym pushu do gałęzi
+`main` repozytorium `michaurbanczyk/tennis_league_package`. Instalacja korzysta z
+`shared/pnpm-lock.yaml`, następnie uruchamia kontrolę TypeScript, testy Relaksmisji,
+build, publikację Workera `rtl` i odczyt publicznego API. Grupa `concurrency`
+zapobiega równoczesnym publikacjom. Workflow można też uruchomić ręcznie przez
+GitHub Actions.
+
+Jednorazowo utwórz w GitHubie sekret repozytorium Actions `CLOUDFLARE_API_TOKEN`.
+Powinien zawierać token Cloudflare z uprawnieniem edycji istniejącego Workera
+`rtl` na koncie `c4fb946ea49e60688d5b2efca9b495cf`. Identyfikator konta jest
+w workflow i w konfiguracji Wrangler. `ADMIN_CODE` pozostaje sekretem Workera
+w Cloudflare; nie dodawaj go do GitHuba. Workflow nie wykonuje migracji D1 ani
+nie przenosi danych i nie publikuje osobnego Workera `relaksmisja`.
+Instrukcja tworzenia tokenu: https://developers.cloudflare.com/workers/ci-cd/external-cicd/github-actions/ .
+Sekret dodaje się w GitHub → Settings → Secrets and variables → Actions.
+
 ## Powrót do poprzedniej wersji
 
 Przed zmianami wykonano archiwa źródeł obu aplikacji, dołączone w `backups/` wraz z commitami i SHA-256. W Sites można ponownie opublikować poprzednią zapisaną wersję aplikacji. Ponieważ ta migracja nie zmienia schematu ani formatu danych, powrót kodu nie wymaga konwersji baz.

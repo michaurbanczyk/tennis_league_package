@@ -1,0 +1,62 @@
+name: Deploy RTL to Cloudflare
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-rtl
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check Cloudflare credentials
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo 'Add CLOUDFLARE_API_TOKEN to this repository’s Actions secrets.' >&2
+            exit 1
+          fi
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.25.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install Relaksmisja dependencies
+        run: npm run install:relaksmisja
+
+      - name: Check TypeScript
+        run: npm run check:relaksmisja
+
+      - name: Test Relaksmisja
+        run: npm run test:relaksmisja
+
+      - name: Build Relaksmisja
+        run: npm run build:relaksmisja
+
+      - name: Deploy rtl Worker
+        working-directory: .generated/relaksmisja
+        env:
+          CLOUDFLARE_ACCOUNT_ID: c4fb946ea49e60688d5b2efca9b495cf
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: node --import ./scripts/sites-env.mjs node_modules/wrangler/bin/wrangler.js deploy --config wrangler.production.jsonc
+
+      - name: Check live league API
+        run: |
+          curl --fail --silent --show-error https://rtl.rtlfinals.workers.dev/api/league |
+            node -e 'let body=""; process.stdin.on("data", chunk => body += chunk); process.stdin.on("end", () => { const league = JSON.parse(body); if (league.theme !== "relaksmisja" || !Array.isArray(league.levels)) process.exit(1); });'
