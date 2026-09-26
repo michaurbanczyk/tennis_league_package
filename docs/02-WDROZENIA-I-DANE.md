@@ -30,13 +30,15 @@ Nie konfiguruj wspólnego `Domain` dla ciasteczek. Nie kopiuj sekretu organizato
 
 ### Cloudflare Worker Relaksmisji
 
-Samodzielny Worker `relaksmisja` ma adres
-`https://relaksmisja.rtlfinals.workers.dev/`. Konfiguracja
-`leagues/relaksmisja/modules/wrangler.production.jsonc` wiąże istniejącą bazę
-D1 `relaksmisja-production` jako `DB` oraz osobny bucket R2
-`relaksmisja-banners` jako `BUCKET`. R2 musi być włączone na koncie Cloudflare;
-bucket należy utworzyć przed publikacją. W Workerze ustaw sekret `ADMIN_CODE`
+Samodzielny Worker `rtl` ma adres
+`https://rtl.rtlfinals.workers.dev/`. Konfiguracja
+`leagues/relaksmisja/modules/wrangler.production.jsonc` wiąże bazę
+D1 `rtl` (`6311be03-b905-4f8e-9e9e-88a8ce36bbd6`) jako `DB` oraz osobny bucket R2
+`rtl-banners` jako `BUCKET`. W nowej bazie zastosowano już
+`drizzle/0000_equal_photon.sql` (26.09.2026). W Workerze ustaw sekret `ADMIN_CODE`
 przez Cloudflare Dashboard lub `wrangler secret put`, bez zapisywania go w kodzie.
+Nowa baza i bucket nie zawierają danych sezonu ani przesłanych wcześniej banerów.
+Zmiana wiązań zacznie działać dopiero po publikacji tej konfiguracji Workera.
 
 Po skonfigurowaniu zasobów:
 
@@ -49,8 +51,7 @@ node scripts/run-framework.mjs build
 node --import ./scripts/sites-env.mjs node_modules/wrangler/bin/wrangler.js deploy --config wrangler.production.jsonc
 ```
 
-Istniejąca baza ma już schemat z `drizzle/0000_equal_photon.sql`. Nie wykonuj
-tego pliku ponownie przy aktualizacji Workera. Banery są przechowywane w R2,
+Nie wykonuj migracji ponownie przy aktualizacji Workera. Banery są przechowywane w R2,
 więc kopie rozgrywek w D1 ich nie obejmują.
 
 ## Powrót do poprzedniej wersji
