@@ -16,6 +16,7 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-24.04
+    environment: prod
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4

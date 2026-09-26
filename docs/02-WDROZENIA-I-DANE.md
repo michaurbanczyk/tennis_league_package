@@ -63,14 +63,15 @@ build, publikację Workera `rtl` i odczyt publicznego API. Grupa `concurrency`
 zapobiega równoczesnym publikacjom. Workflow można też uruchomić ręcznie przez
 GitHub Actions.
 
-Jednorazowo utwórz w GitHubie sekret repozytorium Actions `CLOUDFLARE_API_TOKEN`.
+Jednorazowo utwórz w GitHubie sekret Actions `CLOUDFLARE_API_TOKEN` w środowisku
+`prod`, które jest przypisane do zadania wdrożeniowego.
 Powinien zawierać token Cloudflare z uprawnieniem edycji istniejącego Workera
 `rtl` na koncie `c4fb946ea49e60688d5b2efca9b495cf`. Identyfikator konta jest
 w workflow i w konfiguracji Wrangler. `ADMIN_CODE` pozostaje sekretem Workera
 w Cloudflare; nie dodawaj go do GitHuba. Workflow nie wykonuje migracji D1 ani
 nie przenosi danych i nie publikuje osobnego Workera `relaksmisja`.
 Instrukcja tworzenia tokenu: https://developers.cloudflare.com/workers/ci-cd/external-cicd/github-actions/ .
-Sekret dodaje się w GitHub → Settings → Secrets and variables → Actions.
+Sekret środowiska dodaje się w GitHub → Settings → Environments → prod.
 
 ## Powrót do poprzedniej wersji
 
