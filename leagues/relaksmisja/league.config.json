@@ -1,0 +1,16 @@
+{
+  "id": "relaksmisja",
+  "theme": "relaksmisja",
+  "projectId": "appgprj_6ab142662f18819197e6291eb738feb4",
+  "deploymentUrl": "https://relaksmisja-live.sss115.chatgpt.site",
+  "sourceCommit": "a0d483aef2f1f3ffe9fc4d1b7906432e8d8b304e",
+  "databaseBinding": "DB",
+  "features": {
+    "refereeMode": true,
+    "roundOf16Bracket": true,
+    "tvCourtFilters": true,
+    "bracketEditor": true
+  },
+  "finalsDateCount": 4,
+  "courtCount": 9
+}

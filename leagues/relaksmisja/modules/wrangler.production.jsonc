@@ -1,0 +1,37 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "relaksmisja",
+  "keep_vars": false,
+  "main": "dist/server/index.js",
+  "compatibility_date": "2026-05-15",
+  "compatibility_flags": ["nodejs_compat"],
+  "no_bundle": true,
+  "rules": [
+    {
+      "type": "ESModule",
+      "globs": ["**/*.js", "**/*.mjs"]
+    }
+  ],
+  "assets": {
+    "directory": "dist/client"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "relaksmisja-production",
+      "database_id": "084ad514-4c62-4017-934d-0add4f0e4e8b"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "BUCKET",
+      "bucket_name": "relaksmisja-banners"
+    }
+  ],
+  "secrets": {
+    "required": ["ADMIN_CODE"]
+  },
+  "observability": {
+    "enabled": true
+  }
+}

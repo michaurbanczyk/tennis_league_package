@@ -1,0 +1,31 @@
+{
+  "name": "niezalezne-ligi-tenisowe",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "prepare:smartliga": "node scripts/league.mjs prepare smartliga",
+    "export:smartliga": "node scripts/league.mjs export smartliga",
+    "install:smartliga": "node scripts/league.mjs install smartliga",
+    "build:smartliga": "node scripts/league.mjs build smartliga",
+    "dev:smartliga": "node scripts/league.mjs dev smartliga",
+    "test:smartliga": "node scripts/league.mjs test smartliga",
+    "check:smartliga": "node scripts/league.mjs check smartliga",
+    "prepare:relaksmisja": "node scripts/league.mjs prepare relaksmisja",
+    "export:relaksmisja": "node scripts/league.mjs export relaksmisja",
+    "install:relaksmisja": "node scripts/league.mjs install relaksmisja",
+    "build:relaksmisja": "node scripts/league.mjs build relaksmisja",
+    "dev:relaksmisja": "node scripts/league.mjs dev relaksmisja",
+    "test:relaksmisja": "node scripts/league.mjs test relaksmisja",
+    "check:relaksmisja": "node scripts/league.mjs check relaksmisja",
+    "test:migration": "node tests/migration.mjs",
+    "test:archives": "node tests/archive-delete.mjs",
+    "test:rtl-workflow": "node tests/relaksmisja-workflow.mjs",
+    "test:seeds": "node tests/player-seeds.mjs",
+    "test:schedule-required": "node tests/schedule-required.mjs",
+    "test:banners": "node tests/banners.mjs"
+  }
+}

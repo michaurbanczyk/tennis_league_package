@@ -1,0 +1,16 @@
+{
+  "id": "smartliga",
+  "theme": "smart",
+  "projectId": "appgprj_6ab056e6936c8191adf716fd96f47ed6",
+  "deploymentUrl": "https://smarttenis-live.sss115.chatgpt.site",
+  "sourceCommit": "2f57f870d732a3a4eea5806d5a4a7f2b090c6656",
+  "databaseBinding": "DB",
+  "features": {
+    "refereeMode": true,
+    "roundOf16Bracket": true,
+    "tvCourtFilters": false,
+    "bracketEditor": false
+  },
+  "finalsDateCount": 2,
+  "courtCount": 5
+}

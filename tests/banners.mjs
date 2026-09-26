@@ -1,0 +1,41 @@
+import assert from 'node:assert/strict';
+import path from 'node:path';
+import {deflateSync} from 'node:zlib';
+import {createHash} from 'node:crypto';
+import {materialize,root} from '../scripts/league.mjs';
+import support from './support.cjs';
+const dir=materialize('relaksmisja',path.join(root,'.generated/relaksmisja'));
+const files=new Map();let count=0,fail=false;
+const bucket={async head(key){return files.get(key)||null;},async get(key){const o=files.get(key);return o?{...o,body:o.bytes}:null;},async put(key,data,options){if(fail)throw Error('storage unavailable');const old=files.get(key);if(options.onlyIf.etagMatches&&old?.etag!==options.onlyIf.etagMatches||options.onlyIf.etagDoesNotMatch==='*'&&old)return null;const bytes=typeof data==='string'?new TextEncoder().encode(data):data;const o={etag:'version'+(++count),httpEtag:'"version'+count+'"',httpMetadata:options.httpMetadata,size:bytes.length,bytes};files.set(key,o);return o;}};
+const sessions=new Map(['admin','player','referee','expired'].map(s=>[createHash('sha256').update(s).digest('hex'),{scope:s==='admin'?'admin':s==='expired'?'admin':s,expires:s==='expired'?0:Date.now()+60000}]));
+const db={prepare(){let args;return {bind(...v){args=v;return this;},async first(){const row=sessions.get(args[0]);return row&&row.expires>args[1]?row:null;}};}};
+const loader=support.loader(dir,{database:()=>db},{'@/lib/sponsor-storage':{sponsorStorage:()=>bucket}}),api=loader.load('app/api/banners/route.ts');
+function crc(bytes){let n=0xffffffff;for(const b of bytes){n^=b;for(let i=0;i<8;i++)n=(n>>>1)^(0xedb88320&-(n&1));}return (n^0xffffffff)>>>0;}
+function chunk(type,bytes){const label=Buffer.from(type),n=Buffer.alloc(4),c=Buffer.alloc(4);n.writeUInt32BE(bytes.length);c.writeUInt32BE(crc(Buffer.concat([label,bytes])));return Buffer.concat([n,label,bytes,c]);}
+function png(w,h){const ihdr=Buffer.alloc(13);ihdr.writeUInt32BE(w);ihdr.writeUInt32BE(h,4);ihdr[8]=8;ihdr[9]=2;return Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]),chunk('IHDR',ihdr),chunk('IDAT',deflateSync(Buffer.alloc(h*(w*3+1)))),chunk('IEND',Buffer.alloc(0))]);}
+const image=png(2400,600),header=png(1200,420);
+const get=(kind='sponsors',extra='')=>api.GET(new Request('https://test.invalid/api/banners?kind='+kind+extra));
+const post=(bytes=image,{kind='sponsors',token='admin',version='',mime='image/png',reset=false,extra={}}={})=>api.POST(new Request('https://test.invalid/api/banners?kind='+kind+(reset?'&reset=1':''),{method:'POST',headers:{cookie:'tennis_session='+token,'content-type':mime,'x-banner-version':version,...extra},body:bytes}));
+assert.deepEqual(await (await get()).json(),{version:'',custom:false});
+for(const token of ['','player','referee','expired'])assert.equal((await post(image,{token})).status,403);
+assert.equal((await post(image,{extra:{origin:'https://evil.invalid'}})).status,403);
+assert.equal((await post(image,{extra:{'sec-fetch-site':'cross-site'}})).status,403);
+for(const [bytes,mime] of [[png(100,100),'image/png'],[image,'image/jpeg'],[Buffer.from('<svg/>'),'image/svg+xml'],[image.subarray(0,30),'image/png'],[Buffer.alloc(2*1024*1024+1),'image/png']])assert.equal((await post(bytes,{mime})).status,400);
+assert.equal(files.size,0);
+assert.equal((await post(image)).status,200);const saved=await (await get()).json();assert(saved.custom);
+const response=await get('sponsors','&image=1');assert.equal(response.headers.get('content-type'),'image/png');assert.deepEqual(Buffer.from(await response.arrayBuffer()),image);
+assert.match((await get('sponsors','&image=1&download=1')).headers.get('content-disposition'),/attachment/);
+assert.equal((await post(image)).status,409);assert.equal((await get()).status,200);
+assert.equal((await post(header,{kind:'header'})).status,200);assert.equal(files.size,2);
+assert.equal((await post(image,{kind:'header',version:'version2'})).status,400);
+assert.equal((await post(image,{kind:'other'})).status,400);
+const priorError=console.error;console.error=()=>{};fail=true;
+assert.equal((await post(image,{version:saved.version})).status,503);fail=false;console.error=priorError;
+assert.deepEqual(await (await get()).json(),saved);
+assert.equal((await post('{}',{version:saved.version,reset:true,mime:'application/json'})).status,200);
+const reset=await (await get()).json();assert.equal(reset.custom,false);assert.equal((await get('sponsors','&image=1')).status,404);
+assert.equal((await (await get('header')).json()).custom,true);
+assert.equal((await post(image,{version:reset.version})).status,200);
+const smart=materialize('smartliga',path.join(root,'.generated/smartliga'));
+const {existsSync,readFileSync}=await import('node:fs');assert.equal(existsSync(path.join(smart,'app/api/banners/route.ts')),false);assert.equal(JSON.parse(readFileSync(path.join(smart,'.openai/hosting.json'))).r2,null);
+console.log('PASS: durable banner routes, separate header/sponsor slots, dimensions, format and size validation, role and session expiry checks, cross-origin guard, concurrent replacement, download, storage failure preservation, reset/default, SmartLiga isolation.');
