@@ -16,7 +16,7 @@
     "start": "node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js dev --config dist/server/wrangler.json --local --persist-to .wrangler/state --ip 127.0.0.1 --inspector-port 0",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "format:check": "prettier --check eslint.config.mjs package.json .prettierrc.json .lintstagedrc.json README.md",
+    "format:check": "prettier --check .",
     "db:generate": "drizzle-kit generate"
   },
   "dependencies": {

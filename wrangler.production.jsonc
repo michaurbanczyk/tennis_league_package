@@ -10,29 +10,29 @@
   "rules": [
     {
       "type": "ESModule",
-      "globs": ["**/*.js", "**/*.mjs"]
-    }
+      "globs": ["**/*.js", "**/*.mjs"],
+    },
   ],
   "assets": {
-    "directory": "dist/client"
+    "directory": "dist/client",
   },
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "rtl",
-      "database_id": "6311be03-b905-4f8e-9e9e-88a8ce36bbd6"
-    }
+      "database_id": "6311be03-b905-4f8e-9e9e-88a8ce36bbd6",
+    },
   ],
   "r2_buckets": [
     {
       "binding": "BUCKET",
-      "bucket_name": "rtl-banners"
-    }
+      "bucket_name": "rtl-banners",
+    },
   ],
   "secrets": {
-    "required": ["ADMIN_CODE"]
+    "required": ["ADMIN_CODE"],
   },
   "observability": {
-    "enabled": true
-  }
+    "enabled": true,
+  },
 }

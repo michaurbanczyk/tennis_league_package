@@ -23,7 +23,7 @@ pnpm test
 pnpm build
 ```
 
-ESLint checks the source tree and skips generated build output. Prettier formats staged source and configuration files through the Husky pre-commit hook after `pnpm install`. Run `pnpm format` to format the repository's supported files. The `format:check` command checks the tooling files and README; existing application files adopt Prettier as they are edited. Some existing application lint findings are warnings until their underlying code is updated.
+ESLint checks the source tree and skips generated build output. Prettier formats staged source and configuration files through the Husky pre-commit hook after `pnpm install`. Run `pnpm format` to format the repository's supported files; `pnpm format:check` checks them all. Some existing application lint findings are warnings until their underlying code is updated.
 
 The build produces a Cloudflare Worker in `dist/server` and client assets in `dist/client`.
 
