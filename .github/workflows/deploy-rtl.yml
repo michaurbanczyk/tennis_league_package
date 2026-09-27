@@ -44,6 +44,12 @@ jobs:
       - name: Check TypeScript
         run: pnpm check
 
+      - name: Lint
+        run: pnpm lint
+
+      - name: Check formatting
+        run: pnpm format:check
+
       - name: Test
         run: pnpm test
 

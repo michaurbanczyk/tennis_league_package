@@ -17,9 +17,13 @@ Set `ADMIN_CODE` in a local `.env` file for organizer login. The local D1 and R2
 
 ```bash
 pnpm check
+pnpm lint
+pnpm format:check
 pnpm test
 pnpm build
 ```
+
+ESLint checks the source tree and skips generated build output. Prettier formats staged source and configuration files through the Husky pre-commit hook after `pnpm install`. Run `pnpm format` to format the repository's supported files. The `format:check` command checks the tooling files and README; existing application files adopt Prettier as they are edited. Some existing application lint findings are warnings until their underlying code is updated.
 
 The build produces a Cloudflare Worker in `dist/server` and client assets in `dist/client`.
 
@@ -32,6 +36,8 @@ After verifying the Cloudflare account, resource IDs, and secret:
 ```bash
 pnpm install --frozen-lockfile
 pnpm check
+pnpm lint
+pnpm format:check
 pnpm test
 pnpm build
 pnpm deploy

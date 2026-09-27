@@ -1,0 +1,12 @@
+node_modules/
+.next/
+.vinext/
+.generated/
+.sites-runtime/
+.wrangler/
+dist/
+coverage/
+pnpm-lock.yaml
+drizzle/meta/
+vendor/
+public/
