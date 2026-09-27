@@ -20,15 +20,15 @@ function load(file) {
   function localRequire(id) {
     if (!id.startsWith('@/') && !id.startsWith('.')) return require(id);
     const resolved = id.startsWith('@/')
-      ? path.join(root, id.slice(2))
+      ? path.join(root, 'src', id.slice(2))
       : path.resolve(path.dirname(file), id);
     return load(resolved + (resolved.endsWith('.tsx') || resolved.endsWith('.ts') ? '' : '.ts'));
   }
   new Function('require', 'module', 'exports', output)(localRequire, module, module.exports);
   return module.exports;
 }
-const { makeLevel, bracketRounds } = load(path.join(root, 'lib/tennis.ts'));
-const { HorizontalBracket } = load(path.join(root, 'components/tennis/horizontal-bracket.tsx'));
+const { makeLevel, bracketRounds } = load(path.join(root, 'src/lib/tennis.ts'));
+const { HorizontalBracket } = load(path.join(root, 'src/components/tennis/horizontal-bracket.tsx'));
 const render = (level) => renderToStaticMarkup(React.createElement(HorizontalBracket, { level }));
 for (const size of [4, 8, 16, 32]) {
   const level = makeLevel('Pro', size, 'test');

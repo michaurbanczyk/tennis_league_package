@@ -2,16 +2,34 @@
 
 Standalone Next.js application for the Relaksmisja tennis finals. The frontend and API run through Vinext on Cloudflare Workers. Match and season data are stored in D1; banners and PDF announcements use R2.
 
+## Project structure
+
+```text
+src/
+  app/          App Router pages, layouts, styles, and API route handlers
+  components/   Shared UI and tennis components
+  db/           Database access and schema
+  hooks/        React hooks
+  lib/          League rules and shared helpers
+public/         Static assets
+drizzle/        Database migration
+tests/          Project tests
+scripts/        Local setup and build helpers
+```
+
+Configuration files stay at the project root. The `@/` import alias points to `src/`.
+
 ## Local development
 
 Requires Node.js 22.13 or newer and pnpm 11.25.0.
 
 ```bash
 pnpm install --frozen-lockfile
+pnpm db:local:init
 pnpm dev
 ```
 
-Set `ADMIN_CODE` in a local `.env` file for organizer login. The local D1 and R2 bindings are configured by `vite.config.ts`; local data is separate from production.
+Set `ADMIN_CODE` in a local `.env` file for organizer login, then restart the dev server after changing it. The code is case-insensitive, and spaces and hyphens are ignored. `db:local:init` creates the local D1 tables on the first run and is safe to run again. The local D1 and R2 bindings are configured by `vite.config.ts`; local data is separate from production.
 
 ## Verify
 

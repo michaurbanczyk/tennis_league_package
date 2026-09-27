@@ -28,17 +28,21 @@ const eslintConfig = defineConfig([
   },
   // Existing app findings stay visible until their underlying code is cleaned up.
   {
-    files: ['app/page.tsx', 'app/api/league/route.ts', 'components/tennis/backup-panel.tsx'],
+    files: [
+      'src/app/page.tsx',
+      'src/app/api/league/route.ts',
+      'src/components/tennis/backup-panel.tsx',
+    ],
     rules: {
       '@typescript-eslint/no-explicit-any': 'warn',
     },
   },
   {
     files: [
-      'app/page.tsx',
-      'components/tennis/banner-settings.tsx',
-      'components/tennis/match-timing.tsx',
-      'components/tennis/tv-view.tsx',
+      'src/app/page.tsx',
+      'src/components/tennis/banner-settings.tsx',
+      'src/components/tennis/match-timing.tsx',
+      'src/components/tennis/tv-view.tsx',
     ],
     rules: {
       'react-hooks/purity': 'warn',
@@ -46,13 +50,13 @@ const eslintConfig = defineConfig([
     },
   },
   {
-    files: ['app/page.tsx'],
+    files: ['src/app/page.tsx'],
     rules: {
       '@next/next/no-html-link-for-pages': 'warn',
     },
   },
   {
-    files: ['components/ui/**/*.{ts,tsx}', 'hooks/use-mobile.ts'],
+    files: ['src/components/ui/**/*.{ts,tsx}', 'src/hooks/use-mobile.ts'],
     rules: {
       // These files are vendored verbatim from shadcn@4.17.0. Keep the
       // registry source intact while applying the stricter rules to Site code.

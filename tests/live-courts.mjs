@@ -4,7 +4,7 @@ const require = createRequire(import.meta.url),
   wr = createRequire(require.resolve('wrangler'));
 const { build } = wr('esbuild');
 const bundle = await build({
-  entryPoints: ['lib/tennis.ts'],
+  entryPoints: ['src/lib/tennis.ts'],
   bundle: true,
   write: false,
   platform: 'node',
@@ -18,7 +18,7 @@ const { SITE_LEAGUE } = await import(
     Buffer.from(
       (
         await build({
-          entryPoints: ['lib/site-league.ts'],
+          entryPoints: ['src/lib/site-league.ts'],
           bundle: true,
           write: false,
           platform: 'node',

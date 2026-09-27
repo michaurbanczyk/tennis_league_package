@@ -69,15 +69,15 @@ function app(root) {
       id === '@/db/raw'
         ? { database: () => adapter, adminCode: () => 'SULEK' }
         : id.startsWith('@/')
-          ? load(id.slice(2) + '.ts')
+          ? load('src/' + id.slice(2) + '.ts')
           : id.startsWith('./')
             ? load(file.slice(0, file.lastIndexOf('/') + 1) + id.slice(2) + '.ts')
             : createRequire(root + '/package.json')(id);
     new Function('require', 'module', 'exports', code)(req, m, m.exports);
     return (modules[file] = m.exports);
   }
-  const api = load('app/api/league/route.ts'),
-    tennis = load('lib/tennis.ts');
+  const api = load('src/app/api/league/route.ts'),
+    tennis = load('src/lib/tennis.ts');
   let cookie = '';
   const stored = () => db.prepare('SELECT data FROM boards WHERE id=?').get('main')?.data;
   const board = () => JSON.parse(stored());

@@ -4,5 +4,8 @@ export function database() {
   return env.DB;
 }
 export function adminCode() {
-  return (env as unknown as { ADMIN_CODE?: string }).ADMIN_CODE;
+  return (env as unknown as { ADMIN_CODE?: string }).ADMIN_CODE?.replace(
+    /[\s-]/g,
+    '',
+  ).toUpperCase();
 }

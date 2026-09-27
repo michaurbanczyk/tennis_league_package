@@ -2,8 +2,10 @@
 import { useEffect, useState } from 'react';
 import { FileText, Plus, ExternalLink, Loader2, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+
 type Notice = { id: string; title: string; description: string; uploadedAt: string; size: number };
 type NoticeData = { version: string; items: Notice[]; error?: string };
+
 export function Announcements({ admin }: { admin: boolean }) {
   const [data, setData] = useState<NoticeData | null>(null),
     [error, setError] = useState(''),
@@ -12,6 +14,7 @@ export function Announcements({ admin }: { admin: boolean }) {
   useEffect(() => {
     let active = true;
     const controller = new AbortController();
+
     async function load() {
       try {
         const r = await fetch('/api/announcements', {
@@ -28,6 +31,7 @@ export function Announcements({ admin }: { admin: boolean }) {
         if (active && !controller.signal.aborted) setError((e as Error).message);
       }
     }
+
     void load();
     const timer = setInterval(() => void load(), 30000);
     return () => {
@@ -36,6 +40,7 @@ export function Announcements({ admin }: { admin: boolean }) {
       clearInterval(timer);
     };
   }, []);
+
   async function upload(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!data || busy) return;
@@ -72,6 +77,7 @@ export function Announcements({ admin }: { admin: boolean }) {
       setBusy(false);
     }
   }
+
   async function remove(n: Notice) {
     if (!data || busy || !window.confirm(`Usunąć komunikat „${n.title}” wraz z plikiem PDF?`))
       return;
@@ -98,6 +104,7 @@ export function Announcements({ admin }: { admin: boolean }) {
       setBusy(false);
     }
   }
+
   return (
     <section className="announcements-view" aria-label="Komunikaty">
       <div className="results-top">
