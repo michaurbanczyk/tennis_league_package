@@ -1,0 +1,209 @@
+/* Brand settings apply to the whole page, including portalled match dialogs. */
+.theme-settings{margin:0 0 28px;padding:20px;border:1px solid #ddd;border-radius:5px;background:#fafafa}
+.theme-settings-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:15px;flex-wrap:wrap}
+.theme-settings-heading h2{display:flex;gap:8px;align-items:center;font-size:18px;font-weight:500;margin:0}
+.theme-settings-heading>span{font-size:13px;color:#777}
+.theme-settings form{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+.theme-settings form>div{width:340px;max-width:100%}
+.season-form>label.season-name-field{width:260px;flex:1;min-width:180px}
+.tv-brand-logos{display:flex;align-items:center;gap:16px;flex:none}
+.league-isolation-note{font-size:14px;line-height:1.5;color:#666;margin:0 0 15px}.league-site-links{display:flex;flex-wrap:wrap;gap:12px}
+.bracket-setup-note{padding:12px;background:#f5f5f5;border-radius:4px;color:#555;font-size:14px;line-height:1.5;margin:0}
+.bracket-setup-matches{display:flex;flex-direction:column;gap:16px}.bracket-setup-matches .pair-inputs{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}.bracket-pending-note{font-size:14px;color:#777;margin:0 0 12px}
+.extended-bracket{display:flex;flex-direction:column;gap:25px}.round-matches{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.bracket-round-section>.round-title{font-size:16px;margin-bottom:12px}.bracket-setup-matches label{min-width:0}
+@media(max-width:700px){.round-matches{grid-template-columns:minmax(0,1fr)}.bracket-setup-matches .pair-inputs{grid-template-columns:minmax(0,1fr)}.league-site-links .button{width:100%}}
+body[data-league=relaksmisja]{--league-accent:#eb7626;--league-navy:#1e2d59;--league-soft:#fff2e8;--league-blue:#b5d4e8;--primary:#eb7626;--primary-foreground:#242424;--ring:#eb7626}
+body[data-league=relaksmisja] .site-header{background:#1e2d59;color:#fff}
+body[data-league=relaksmisja] .header-inner{padding-top:25px;padding-bottom:25px;min-height:132px;gap:20px}
+body[data-league=relaksmisja] .brand{gap:22px;flex:none}
+body[data-league=relaksmisja] .brand img{height:82px;width:82px;border-radius:50%;object-fit:contain}
+body[data-league=relaksmisja] .rtl-brand-divider{display:block;flex:none;width:1px;height:46px;background:#ffffff35}
+body[data-league=relaksmisja] .rtl-wordmark{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:3px;width:231px;height:77px;background:transparent;color:#fff;letter-spacing:normal}
+body[data-league=relaksmisja] .rtl-wordmark-title{display:block;font-family:Arial,sans-serif;font-size:32px;line-height:1.1;font-weight:800;font-style:italic;letter-spacing:1px;white-space:nowrap;color:#fff}
+body[data-league=relaksmisja] .rtl-wordmark-tagline{display:block;font-family:Arial,sans-serif;font-size:12px;line-height:1.4;font-weight:400;font-style:italic;letter-spacing:.45px;white-space:nowrap;color:#fff}
+body[data-league=relaksmisja] .header-actions{gap:10px}
+body[data-league=relaksmisja] .header-admin{color:#fff;border-color:#ffffff50;background:transparent}
+body[data-league=relaksmisja] .header-admin svg{color:#fff}
+body[data-league=relaksmisja] .navigation-search{background:white;color:#353535;border-top:3px solid #b5d4e8;max-width:none}
+body[data-league=relaksmisja] .navigation-search-row,body[data-league=relaksmisja] .navigation-search-results{max-width:1184px;margin-left:auto;margin-right:auto}
+@media(min-width:1150px){body[data-league=relaksmisja] .navigation-search{padding-left:48px;padding-right:48px}}
+body[data-league=relaksmisja] .lime,body[data-league=relaksmisja] .dark{background:#eb7626;color:#242424}
+body[data-league=relaksmisja] .lime:hover,body[data-league=relaksmisja] .dark:hover{background:#f28a43}
+body[data-league=relaksmisja] .outline{color:#363636;border-color:#d6d6d6}
+body[data-league=relaksmisja] .outline:hover{background:#fff2e8}
+body[data-league=relaksmisja] .season-heading{color:#b44e0b!important}
+body[data-league=relaksmisja] .level-title h3,body[data-league=relaksmisja] .text-button,body[data-league=relaksmisja] .card-controls button,body[data-league=relaksmisja] .season-management-trigger{color:#363636}
+body[data-league=relaksmisja] .level-icon,body[data-league=relaksmisja] .overview-icon,body[data-league=relaksmisja] .stack-form legend,body[data-league=relaksmisja] .score-labels>span,body[data-league=relaksmisja] .round-title svg{color:#b44e0b}
+body[data-league=relaksmisja] .level-tabs [data-state=active],body[data-league=relaksmisja] .court-filter-tabs [data-state=active],body[data-league=relaksmisja] .page-tabs [data-state=active]{border-bottom-color:#eb7626}
+body[data-league=relaksmisja] .court-column{border-top-color:#eb7626}
+body[data-league=relaksmisja] .schedule-slot>span,body[data-league=relaksmisja] .live-queue-level,body[data-league=relaksmisja] .schedule-day>h3{color:#a5470a}
+body[data-league=relaksmisja] .schedule-date-tabs [data-slot=tabs-trigger][data-state=active]{background:#fff2e8!important;color:#8c3a08;border-color:#eb7626}
+body[data-league=relaksmisja] .overview{background:#f3f3f3;border-color:#e5e5e5}
+body[data-league=relaksmisja] .overview>div{border-color:#d8d8d8}
+body[data-league=relaksmisja] .overview strong,body[data-league=relaksmisja] .overview>div>span:last-child,body[data-league=relaksmisja] .overview>p,body[data-league=relaksmisja] .overview>p strong{color:#454545}
+body[data-league=relaksmisja] .overview-icon,body[data-league=relaksmisja] .overview-icon.green{background:transparent;color:#b44e0b}
+body[data-league=relaksmisja] .organizer-panel{background:#fff;border-color:#f1d7c5}
+body[data-league=relaksmisja] .admin-bar{background:#fff2e8;border-color:#f1d7c5}
+body[data-league=relaksmisja] .admin-bar>span,body[data-league=relaksmisja] .admin-bar>span>span{color:#514336}
+body[data-league=relaksmisja] .season-management{border-color:#eaded5}
+body[data-league=relaksmisja] .new-season-note,body[data-league=relaksmisja] .current-code-value,body[data-league=relaksmisja] .code-card>div{background:#fff2e8;color:#514336}
+body[data-league=relaksmisja] .current-code-value code,body[data-league=relaksmisja] .code-card code{color:#8c3a08}
+body[data-league=relaksmisja] .courtside-icon{background:#fff2e8;color:#b44e0b}
+body[data-league=relaksmisja] .final-card{border-color:#b5d4e8;box-shadow:0 5px 20px #24425412}
+body[data-league=relaksmisja] .final-highlight{background:#b5d4e8;color:#244254}
+body[data-league=relaksmisja] .final-trophy{background:#ffffff66;color:#34586e}
+body[data-league=relaksmisja] input:focus{border-color:#eb7626;box-shadow:0 0 0 3px #eb762620}
+body[data-league=relaksmisja] button:focus-visible,body[data-league=relaksmisja] a:focus-visible{outline-color:#eb7626}
+/* Keep green reserved for playing/winning states. TV uses the same branding. */
+body[data-league=relaksmisja] .tv-header{background:#1e2d59;color:#fff;padding:12px 18px;border-radius:5px;border-bottom:3px solid #b5d4e8}
+body[data-league=relaksmisja] .tv-brand-logos img{border-radius:50%;width:auto;height:64px}
+body[data-league=relaksmisja] .tv-brand .rtl-wordmark{height:64px;width:214px}
+body[data-league=relaksmisja] .tv-brand .rtl-wordmark-title{font-size:30px}
+body[data-league=relaksmisja] .tv-brand h1{font-size:clamp(20px,2vw,36px)}
+body[data-league=relaksmisja] .tv-brand p{color:#d3e4ee}
+body[data-league=relaksmisja] .tv-exit{color:#fff;background:transparent;border-color:#ffffff50}
+body[data-league=relaksmisja] .tv-court>h2{background:#b5d4e8;color:#244254}
+body[data-league=relaksmisja] .tv-idle>h2{background:#e5eff5;color:#3b5363}
+body[data-league=relaksmisja] .tv-court{border-color:#d9e3e9}
+body[data-league=relaksmisja] .tv-next,body[data-league=relaksmisja] .tv-previous{background:#f5f7f9;border-color:#e1e7eb}
+body[data-league=relaksmisja] .tv-level-name{color:#94501f}
+body[data-league=relaksmisja] .tv-match-description h3.tv-final-title{background:#b5d4e8;color:#244254;padding:3px 6px;border-radius:3px}
+@media(max-width:900px){body[data-league=relaksmisja] .tv-brand{flex-wrap:wrap}body[data-league=relaksmisja] .tv-brand-logos{gap:10px}body[data-league=relaksmisja] .tv-brand-logos img{height:44px}body[data-league=relaksmisja] .tv-brand .rtl-wordmark{width:171px;height:44px}body[data-league=relaksmisja] .tv-brand .rtl-wordmark-title{font-size:24px}body[data-league=relaksmisja] .tv-brand .rtl-wordmark-tagline{font-size:11px;letter-spacing:0}}
+@media(max-width:700px){
+ .theme-settings{padding:16px}.theme-settings form>div,.theme-settings form>.button{width:100%}
+ .season-form>label.season-name-field{width:100%;flex:auto}
+ body[data-league=relaksmisja] .header-inner{padding:20px 16px;flex-wrap:wrap;justify-content:center;gap:18px}
+ body[data-league=relaksmisja] .brand{width:100%;justify-content:center;gap:14px}
+ body[data-league=relaksmisja] .brand img{width:65px;height:65px}
+ body[data-league=relaksmisja] .rtl-brand-divider{height:38px}
+ body[data-league=relaksmisja] .brand .rtl-wordmark{width:185px;height:65px}
+ body[data-league=relaksmisja] .rtl-wordmark-title{font-size:26px;letter-spacing:.5px}
+ body[data-league=relaksmisja] .rtl-wordmark-tagline{font-size:11px;letter-spacing:0}
+ body[data-league=relaksmisja] .header-actions{width:100%;justify-content:center}
+}
+@media(max-width:440px){body[data-league=relaksmisja] .tv-brand-logos img{display:block}body[data-league=relaksmisja] .tv-header{align-items:flex-start;padding:12px;flex-wrap:wrap}body[data-league=relaksmisja] .tv-brand{width:100%}}
+@media(max-width:360px){body[data-league=relaksmisja] .brand{gap:10px}body[data-league=relaksmisja] .brand img{width:59px;height:59px}body[data-league=relaksmisja] .brand .rtl-wordmark{width:171px;height:59px}body[data-league=relaksmisja] .brand .rtl-wordmark-title{font-size:24px}}
+
+/* Two weekends and the nine named Relaksmisja courts. */
+body[data-league=relaksmisja] .season-form>.season-name-field{flex:1 0 100%;width:100%}
+.finals-days-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.finals-days-grid input{min-width:0}
+@media(min-width:900px){
+ body[data-league=relaksmisja] .tv-courts{grid-template-columns:repeat(9,minmax(0,1fr));gap:8px}
+ body[data-league=relaksmisja] .tv-screen{--tv-text:14px;--tv-name:18px;--tv-score:32px}
+ body[data-league=relaksmisja] .tv-court>h2{font-size:18px;padding:12px 8px}
+ body[data-league=relaksmisja] .tv-current,body[data-league=relaksmisja] .tv-next,body[data-league=relaksmisja] .tv-previous{padding-left:8px;padding-right:8px}
+ body[data-league=relaksmisja] .tv-previous-player{grid-template-columns:1fr;font-size:14px}
+ body[data-league=relaksmisja] .tv-previous-sets{justify-content:start}
+ body[data-league=relaksmisja] .tv-player-name,body[data-league=relaksmisja] .tv-has-previous .tv-player-name{font-size:18px}
+ body[data-league=relaksmisja] .tv-planned-start,body[data-league=relaksmisja] .tv-previous-finished,body[data-league=relaksmisja] .tv-next-players{font-size:14px}
+}
+.referee-options{border-top:1px solid #e3e7eb;margin-top:18px;padding-top:6px}
+.referee-options-trigger{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:44px;background:transparent;border:0;padding:8px 0;color:#697482;font-size:14px;text-align:left}
+.referee-options-trigger[data-state=open]>svg{transform:rotate(90deg)}
+.referee-options-content[data-state=closed]{display:none}
+.referee-options-content{display:flex;flex-direction:column;gap:12px;padding:6px 0 12px}
+.referee-options-content p{font-size:13px;line-height:1.5;margin:0;color:#697482}
+.referee-options-content .referee-checkbox{display:flex;flex-direction:row;align-items:center;gap:10px;min-height:44px;color:#34455f;font-size:14px}
+.referee-options-content [data-slot=checkbox]{width:20px;height:20px}
+.referee-options-content [data-slot=checkbox][data-state=checked]{background:#eb7626;border-color:#eb7626}
+.referee-options-content .current-code-value{margin:0}
+.referee-code{background:#eef3fa!important;border:1px solid #d7e0ed}
+.referee-code code{color:#1e2d59!important}
+.referee-code-caption{margin-top:12px}
+.referee-card-label{display:flex;align-items:center;gap:5px;padding:0 19px;font-size:12px;color:#64748a;margin-top:14px}
+.point-scored .numbers,.point-scored .score-labels>div{grid-template-columns:repeat(3,28px) 38px;gap:5px}
+.numbers .point-column-value{color:#994408;background:#fff0e4;border-radius:4px;font-weight:600}
+.score-labels .point-column-label{color:#994408}
+.referee-editor-hint{display:flex;align-items:center;justify-content:center;gap:9px}
+.referee-scoring>div{background:#eef3fa!important;color:#1e2d59!important;border:1px solid #d7e0ed}
+.referee-scoring strong{color:#1e2d59!important}
+.referee-live-points{display:flex;align-items:center;gap:7px;color:#994408;font-size:14px;margin:12px 0}
+.referee-live-points strong{font-size:18px;font-variant-numeric:tabular-nums}
+.tv-point-score{display:flex;align-items:center;justify-content:space-between;gap:6px;background:#fff0e4;color:#994408;padding:4px 7px;margin:0 0 5px;border-radius:4px}
+.tv-point-score>span{font-size:12px}.tv-point-score>strong{font-size:24px;line-height:1.1;font-variant-numeric:tabular-nums}
+@media(max-width:420px){.point-scored .avatar{display:none}.point-scored .numbers,.point-scored .score-labels>div{grid-template-columns:repeat(3,24px) 32px;gap:3px}.point-scored .card-top,.point-scored .player-row,.point-scored .score-labels{padding-left:14px;padding-right:14px}.point-scored .numbers>span{font-size:21px}.referee-code{flex-wrap:wrap;gap:10px}}
+
+/* Secondary referee entry, kept in the footer. */
+.footer-tools{display:flex;align-items:center;justify-content:flex-end;gap:18px;flex-wrap:wrap;text-align:right}.footer-referee{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:44px;padding:8px 10px;border-radius:4px;color:#666;font-size:14px;white-space:nowrap}.footer-referee:hover{background:#f3f4f6;color:#1e2d59}.footer-referee:focus-visible{outline:2px solid #eb7626;outline-offset:2px}@media(max-width:700px){.footer-tools{flex-direction:column;align-items:flex-end;gap:4px;max-width:50%}.footer-tools>span{font-size:12px;line-height:1.5}}
+
+/* Keep names and their scores together before the match starts. */
+.start-match-scoreboard{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;background:#f6f8fb;border:1px solid #e1e6ef;border-radius:8px;overflow:hidden;margin:0 0 18px;text-align:left}
+.start-match-scoreboard thead th{font-size:12px;font-weight:500;color:#758097;padding:12px 0 8px;text-align:center;width:38px}
+.start-match-scoreboard thead th:first-child{width:auto;text-align:left;padding-left:16px}
+.start-match-scoreboard thead th:last-child{width:46px;padding-right:8px}
+.start-match-scoreboard tbody th{padding:15px 10px 15px 16px;font-size:17px;font-weight:600;color:#1e2d59;line-height:1.4;vertical-align:middle}
+.start-player-name{display:block;white-space:normal;overflow-wrap:anywhere}
+.start-match-scoreboard tbody td{font-size:24px;font-weight:500;text-align:center;color:#9aa3b3;font-variant-numeric:tabular-nums;vertical-align:middle}
+.start-match-scoreboard tbody td:last-child{padding-right:8px}
+.start-match-scoreboard tbody tr+tr>*{border-top:1px solid #e1e6ef}
+.start-match-scoreboard tbody td.start-current-score{color:#1e2d59;font-weight:600}
+.editor .scoring-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.editor .scoring-grid>div{min-width:0}
+.editor .scoring-grid>div>span{width:100%;overflow-wrap:anywhere;line-height:1.4;font-size:16px;font-weight:500}
+@media(max-width:400px){.start-match-scoreboard tbody th{font-size:16px;padding-left:12px}.start-match-scoreboard thead th:first-child{padding-left:12px}.start-match-scoreboard thead th{width:30px}.start-match-scoreboard thead th:last-child{width:38px}.start-match-scoreboard tbody td{font-size:22px}}
+
+/* Nine-court TV layout: points share the score row instead of adding height. */
+body[data-league=relaksmisja] .tv-screen{padding:clamp(12px,1.6dvh,22px);gap:clamp(10px,1.5dvh,18px);--tv-name:clamp(14px,1.1vw,20px);--tv-text:clamp(12px,.88vw,16px);--tv-score:clamp(23px,1.75vw,34px)}
+body[data-league=relaksmisja] .tv-court>h2{font-size:clamp(15px,1.15vw,22px);padding:10px 8px;line-height:1.25}
+.tv-live-heading .status{white-space:nowrap;flex-shrink:0;gap:5px}
+body[data-league=relaksmisja] .tv-live-heading{align-items:center;flex-wrap:wrap;margin-bottom:5px}
+body[data-league=relaksmisja] .tv-live-heading .status{margin:0}
+body[data-league=relaksmisja] .tv-match-description{min-height:0}
+body[data-league=relaksmisja] .tv-match-description h3{margin-bottom:8px}
+body[data-league=relaksmisja] .tv-current{padding-top:9px;padding-bottom:9px}
+body[data-league=relaksmisja] .tv-players{display:flex;flex-direction:column;justify-content:center;gap:0;flex:1;min-height:min-content}
+body[data-league=relaksmisja] .tv-player{flex:0 0 auto;min-height:min-content;padding:12px 0;justify-content:flex-start}
+body[data-league=relaksmisja] .tv-player-name,body[data-league=relaksmisja] .tv-has-previous .tv-player-name{font-size:var(--tv-name);line-height:1.3;margin:0 0 8px;overflow-wrap:anywhere}
+body[data-league=relaksmisja] .tv-set-scores{gap:3px;flex-shrink:0}
+.tv-set-scores.tv-with-points{grid-template-columns:repeat(4,minmax(0,1fr))}
+body[data-league=relaksmisja] .tv-set-score>strong,body[data-league=relaksmisja] .tv-has-previous .tv-set-score>strong{font-size:var(--tv-score);line-height:1.15}
+body[data-league=relaksmisja] .tv-set-score>span{font-size:12px}
+.tv-set-score.tv-game-points{background:#fff0e4;color:#994408}.tv-game-points>span{color:#994408}
+body[data-league=relaksmisja] .tv-next,body[data-league=relaksmisja] .tv-has-previous .tv-next{min-height:0;padding-top:10px;padding-bottom:10px}
+body[data-league=relaksmisja] .tv-next-empty{font-size:12px;line-height:1.4}
+body[data-league=relaksmisja] .tv-planned-start{font-size:12px;line-height:1.4}
+body[data-league=relaksmisja] .tv-previous-player{font-size:12px;line-height:1.3;padding:2px 0}
+body[data-league=relaksmisja] .tv-previous-sets{font-size:15px}
+body[data-league=relaksmisja] .tv-previous-finished{font-size:12px}
+@media(min-width:900px) and (max-height:800px){body[data-league=relaksmisja] .tv-header{padding:8px 12px}body[data-league=relaksmisja] .tv-brand-logos img{height:44px}body[data-league=relaksmisja] .tv-brand .rtl-wordmark{height:44px}body[data-league=relaksmisja] .tv-brand .rtl-wordmark-title{font-size:26px}body[data-league=relaksmisja] .tv-player{padding:7px 0}body[data-league=relaksmisja] .tv-has-previous .tv-player-name{font-size:14px;margin-bottom:4px}body[data-league=relaksmisja] .tv-has-previous .tv-current{padding-top:6px;padding-bottom:6px}}
+@media(max-width:899px){body[data-league=relaksmisja] .tv-courts{grid-template-columns:repeat(3,minmax(0,1fr))}body[data-league=relaksmisja] .tv-current{min-height:280px}body[data-league=relaksmisja] .tv-player-name{font-size:18px}}
+@media(max-width:600px){body[data-league=relaksmisja] .tv-courts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:440px){body[data-league=relaksmisja] .tv-courts{grid-template-columns:minmax(0,1fr)}}
+
+/* TV venue choice stays on this display while live scores keep refreshing. */
+.tv-header-controls{display:flex;align-items:center;justify-content:flex-end;gap:16px;flex-wrap:wrap}.tv-venue-filter{display:flex;gap:4px;padding:4px;background:#f3f3f3;border-radius:10px}.tv-venue-filter button{border:0;border-radius:7px;padding:10px 14px;font-size:14px;white-space:nowrap;background:transparent;color:#555;cursor:pointer}.tv-venue-filter button[aria-pressed=true]{background:#303030;color:#fff}.tv-venue-filter button:focus-visible{outline:3px solid #d95946;outline-offset:2px}
+@media(min-width:900px){body[data-league=relaksmisja] .tv-screen[data-venue=fame] .tv-courts{grid-template-columns:repeat(6,minmax(0,1fr))}body[data-league=relaksmisja] .tv-screen[data-venue=flex] .tv-courts{grid-template-columns:repeat(3,minmax(0,1fr))}body[data-league=relaksmisja] .tv-screen[data-venue=flex]{--tv-name:clamp(18px,1.65vw,32px);--tv-score:clamp(28px,3.2vw,62px)}}
+@media(max-width:899px){.tv-header{flex-wrap:wrap}.tv-header-controls{gap:8px}.tv-venue-filter button{padding:9px 10px}.tv-venue-filter{gap:2px}}
+
+@media(min-width:900px){body[data-league=relaksmisja] .tv-screen[data-venue] .tv-courts{grid-template-columns:repeat(var(--tv-columns,9),minmax(0,1fr))}}
+
+/* Broadcast score blocks; previous and upcoming matches retain their own space. */
+body[data-league=relaksmisja] .tv-players{gap:10px;min-height:0;justify-content:center}
+body[data-league=relaksmisja] .tv-player{padding:0 0 8px;border-bottom:1px solid #e1e7eb;min-height:0;flex:0 0 auto}
+body[data-league=relaksmisja] .tv-player:last-child{border-bottom:0;padding-bottom:0}
+body[data-league=relaksmisja] .tv-player-name,body[data-league=relaksmisja] .tv-has-previous .tv-player-name{background:#1e2d59;color:#fff;padding:7px 8px;border-radius:3px;margin:0 0 7px;font-size:var(--tv-name);line-height:1.2;font-weight:600;overflow-wrap:anywhere}
+body[data-league=relaksmisja] .tv-set-score{background:#f2f3f5;color:#1e2d59;border-radius:3px;padding:5px 1px;gap:3px}
+body[data-league=relaksmisja] .tv-set-score>strong,body[data-league=relaksmisja] .tv-has-previous .tv-set-score>strong{font-weight:700;font-size:var(--tv-score);font-variant-numeric:tabular-nums;line-height:1.1}
+body[data-league=relaksmisja] .tv-set-score>span{color:#667084;font-size:11px}
+body[data-league=relaksmisja] .tv-set-score.tv-current-set{background:#eb7626;color:#17264d}
+body[data-league=relaksmisja] .tv-current-set>span{color:#48250e}
+body[data-league=relaksmisja] .tv-set-score.tv-unplayed{color:#9a9fa8}
+body[data-league=relaksmisja] .tv-set-score.tv-game-points{background:#e2ebf5;color:#1e2d59;border:1px solid #b5cbe2}
+body[data-league=relaksmisja] .tv-previous-label{font-size:11px;letter-spacing:.3px;text-transform:uppercase;color:#687180;margin:0 0 5px}
+body[data-league=relaksmisja] .tv-previous-finished{margin:4px 0 0;padding-top:4px}
+body[data-league=relaksmisja] .tv-previous,body[data-league=relaksmisja] .tv-next{flex:0 0 auto}
+body[data-league=relaksmisja] .tv-previous-sets{color:#1e2d59}
+body[data-league=relaksmisja] .tv-has-previous .tv-match-description h3{margin-bottom:4px}
+@media(min-width:900px) and (max-height:800px){body[data-league=relaksmisja] .tv-screen{--tv-name:14px;--tv-score:26px;gap:8px;padding:10px}body[data-league=relaksmisja] .tv-players{gap:7px}body[data-league=relaksmisja] .tv-player-name,body[data-league=relaksmisja] .tv-has-previous .tv-player-name{padding:5px 6px;margin-bottom:4px}body[data-league=relaksmisja] .tv-set-score{padding:3px 1px;gap:2px}body[data-league=relaksmisja] .tv-current{padding:6px 8px}body[data-league=relaksmisja] .tv-previous,body[data-league=relaksmisja] .tv-next{padding:7px 8px}body[data-league=relaksmisja] .tv-next-players{font-size:12px;line-height:1.3}body[data-league=relaksmisja] .tv-next-label{margin-bottom:4px}body[data-league=relaksmisja] .tv-footer{font-size:11px}}
+@media(min-width:900px) and (max-height:800px){
+body[data-league=relaksmisja] .tv-previous-label{font-size:9px;letter-spacing:0;margin-bottom:3px}
+body[data-league=relaksmisja] .tv-previous-player{font-size:11px;line-height:1.2;padding:1px 0}
+body[data-league=relaksmisja] .tv-previous-sets{font-size:13px}
+body[data-league=relaksmisja] .tv-previous-finished{font-size:10px;margin-top:2px;padding-top:2px}
+body[data-league=relaksmisja] .tv-planned-start{font-size:10px;line-height:1.3}
+body[data-league=relaksmisja] .tv-live-heading,body[data-league=relaksmisja] .tv-planned-start,body[data-league=relaksmisja] .tv-match-description{flex-shrink:0}
+body[data-league=relaksmisja] .tv-players{min-height:min-content}
+}
+/* Keep neighbouring matches visible even on unusually short displays. */
+body[data-league=relaksmisja] .tv-current{overflow-y:auto}
