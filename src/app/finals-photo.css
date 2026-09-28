@@ -10,7 +10,7 @@
 
 .finals-photo-inner {
   width: min(100%, 1280px);
-  min-height: 300px;
+  min-height: 320px;
   margin-inline: auto;
   padding: 28px clamp(20px, 5vw, 64px);
   display: flex;
