@@ -1,4 +1,5 @@
 'use client';
+import './finals-photo.css';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { AccessCodeForm } from '@/components/tennis/access-code-form';
 import { ScoreEditor } from '@/components/tennis/score-editor';
@@ -609,30 +610,43 @@ export default function Home() {
           }
         />
       </header>
+      {isRtl && (
+        <section className="finals-photo-heading" aria-labelledby="finals-photo-title">
+          <div className="finals-photo-inner">
+            <h1 id="finals-photo-title">
+              <span className="finals-photo-kicker">Finały</span>
+              <span className="finals-photo-name">Relaksmisja Tennis League</span>
+              {board.season && <span className="finals-photo-season">{board.season}</span>}
+            </h1>
+          </div>
+        </section>
+      )}
       {!isRtl && (
         <div className="tennis-banner" role="img" aria-label="Rakieta tenisowa — Smart Liga" />
       )}
       <main className="main-wrap">
-        <section className="heading">
-          <div>
-            <div className="heading-title">
-              <span className="heading-symbol">
-                <Trophy size={26} />
-              </span>
-              <div>
-                <h1>
-                  {brand.title}
-                  {board.season && (
-                    <span className="season-heading">
-                      {isRtl ? '' : 'Sezon '}
-                      {board.season}
-                    </span>
-                  )}
-                </h1>
-                {!isRtl && <p>Półfinały · finały · mecze o 3. miejsce</p>}
+        <section className={`heading${isRtl ? ' heading-below-photo' : ''}`}>
+          {!isRtl && (
+            <div>
+              <div className="heading-title">
+                <span className="heading-symbol">
+                  <Trophy size={26} />
+                </span>
+                <div>
+                  <h1>
+                    {brand.title}
+                    {board.season && (
+                      <span className="season-heading">
+                        {isRtl ? '' : 'Sezon '}
+                        {board.season}
+                      </span>
+                    )}
+                  </h1>
+                  {!isRtl && <p>Półfinały · finały · mecze o 3. miejsce</p>}
+                </div>
               </div>
             </div>
-          </div>
+          )}
           <div className={`sync ${online ? '' : 'offline'}`} role="status">
             {!archived && (online ? <span className="live-dot" /> : <WifiOff size={16} />)}
             <div>

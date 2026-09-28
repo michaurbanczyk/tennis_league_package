@@ -1,0 +1,72 @@
+/* Shared heading outside the tab panels; the season remains live text. */
+.finals-photo-heading {
+  background-color: #342923;
+  background-image:
+    linear-gradient(90deg, #00000030, transparent 80%), url('/relaksmisja-finals-header.jpg');
+  background-position: center;
+  background-size: cover;
+  color: #fff;
+}
+
+.finals-photo-inner {
+  width: min(100%, 1280px);
+  min-height: clamp(280px, 28vw, 440px);
+  margin-inline: auto;
+  padding: clamp(32px, 5vw, 72px) clamp(20px, 5vw, 64px);
+  display: flex;
+  align-items: center;
+}
+
+.finals-photo-heading h1 {
+  margin: 0;
+  color: #fff;
+  font-family: Arial, sans-serif;
+  font-size: clamp(28px, 3.6vw, 52px);
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.035em;
+  text-shadow: 0 2px 8px #00000050;
+}
+
+.finals-photo-kicker,
+.finals-photo-name,
+.finals-photo-season {
+  display: block;
+  color: #fff;
+}
+
+.finals-photo-kicker {
+  margin-bottom: 8px;
+}
+
+.finals-photo-season {
+  margin-top: 28px;
+  font-size: 0.78em;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+
+.heading.heading-below-photo {
+  justify-content: flex-end;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 600px) {
+  .finals-photo-heading {
+    background-image:
+      linear-gradient(90deg, #00000075, #00000020), url('/relaksmisja-finals-header.jpg');
+    background-position: 62% center;
+  }
+
+  .finals-photo-inner {
+    min-height: 260px;
+  }
+
+  .finals-photo-name {
+    max-width: 18ch;
+  }
+
+  .finals-photo-season {
+    margin-top: 22px;
+  }
+}
