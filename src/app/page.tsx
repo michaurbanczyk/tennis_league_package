@@ -1,18 +1,15 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { AccessCodeForm } from '@/components/tennis/access-code-form';
+import { ScoreEditor } from '@/components/tennis/score-editor';
 import { ArchiveDelete } from '@/components/tennis/archive-delete';
 import { BackupPanel } from '@/components/tennis/backup-panel';
 import { MatchSearch } from '@/components/tennis/match-search';
-import { YoutubeLink } from '@/components/tennis/youtube-link';
-import { HorizontalBracket } from '@/components/tennis/horizontal-bracket';
-import { LiveBall } from '@/components/tennis/live-ball';
-import { LeagueBrand } from '@/components/tennis/league-brand';
-import { courtEntries } from '@/lib/court-config';
 import { SeasonFields, readSeasonFields } from '@/components/tennis/season-fields';
 import { leagueBrand, numberedSeason } from '@/lib/league-theme';
 import { SITE_LEAGUE } from '@/lib/site-league';
 import { BracketSetup } from '@/components/tennis/bracket-setup';
-import { RefereeSettings, RefereeScoring } from '@/components/tennis/referee';
+import { RefereeSettings } from '@/components/tennis/referee';
 import { TvView } from '@/components/tennis/tv-view';
 import {
   Activity,
@@ -20,25 +17,19 @@ import {
   Check,
   CheckCheck,
   ChevronRight,
-  Clock3,
   Copy,
   KeyRound,
   Loader2,
-  LockKeyhole,
   Plus,
-  Play,
   RefreshCw,
-  Settings2,
   ShieldCheck,
   Trophy,
-  Tv,
   Undo2,
   WifiOff,
-  X,
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
   SelectTrigger,
@@ -46,298 +37,41 @@ import {
   SelectContent,
   SelectItem,
 } from '@/components/ui/select';
-import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Toaster, toast } from 'sonner';
 import { BannerSettings, LeagueHeader } from '@/components/tennis/banner-settings';
 import { Sponsors } from '@/components/tennis/sponsors';
-import { MatchTiming } from '@/components/tennis/match-timing';
 import { localMatchDate } from '@/lib/match-timing';
 import { FinalsSummary } from '@/components/tennis/finals-summary';
 import { Announcements } from '@/components/tennis/announcements';
 import {
   matchFormat,
-  matchFormatLabel,
   hasMatchSchedule,
   MATCH_SCHEDULE_REQUIRED,
-  seededPlayerName,
   seedLimit,
-  canEditMatch,
   scopeMatchId,
-  pointLabels,
-  pointMode,
   courtSchedule,
   liveCourts,
   polishDate,
-  courtNumber,
   courtLabel,
-  dateLabel,
-  levelsForTheme,
-  makeLevel,
   entryMatches,
   matchSources,
   propagatePlayers,
-  bracketRounds,
   isDoubles,
-  playerPlaceholder,
   demo,
   matchWinner,
   setWinner,
   type Board,
   type Match,
-  type Level,
 } from '@/lib/tennis';
-type ArchiveSummary = { id: string; season: string; archivedAt: string };
-type Data = Board & {
-  revision: number;
-  scope: string | null;
-  serverTime?: string;
-  archives?: ArchiveSummary[];
-};
-type Modal =
-  | 'referee-login'
-  | 'login'
-  | 'admin'
-  | 'create'
-  | 'editor'
-  | 'details'
-  | 'codes'
-  | 'new-season'
-  | 'reset-league'
-  | null;
+import { ResultsView } from '@/components/tennis/results-view';
+import { ScheduleView } from '@/components/tennis/schedule-view';
+import { LiveView } from '@/components/tennis/live-view';
+import { CourtSelect, MatchDateSelect } from '@/components/tennis/match-form-fields';
+import type { LeagueData as Data, LeagueModal as Modal } from '@/lib/league-page-types';
 
 const empty: Data = { levels: [], theme: SITE_LEAGUE, revision: 0, scope: null };
-function CourtSelect({
-  name,
-  value = '',
-  disabled = false,
-  board,
-}: {
-  name: string;
-  value?: string;
-  disabled?: boolean;
-  board: Board;
-}) {
-  return (
-    <Select
-      name={name}
-      defaultValue={courtNumber(value, board) || 'unassigned'}
-      disabled={disabled}
-    >
-      <SelectTrigger className="format-select" aria-label="Numer kortu">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="unassigned">Kort do ustalenia</SelectItem>
-        {courtEntries(board).map((c) => (
-          <SelectItem key={c.id} value={c.id}>
-            {c.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
-}
-function MatchDateSelect({
-  name,
-  dates,
-  value,
-  disabled = false,
-}: {
-  name: string;
-  dates: string[];
-  value?: string;
-  disabled?: boolean;
-}) {
-  if (!dates.length)
-    return (
-      <input type="date" name={name} defaultValue={value || 'unassigned'} disabled={disabled} />
-    );
-  const options = value && !dates.includes(value) ? [...dates, value].sort() : dates;
-  return (
-    <Select name={name} defaultValue={value || 'unassigned'} disabled={disabled}>
-      <SelectTrigger className="format-select" aria-label="Data meczu">
-        <SelectValue placeholder="Wybierz datę" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="unassigned">Data do ustalenia</SelectItem>
-        {options.map((date) => (
-          <SelectItem key={date} value={date}>
-            {dateLabel(date)}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
-}
-const labels = {
-  live: 'W grze',
-  scheduled: 'Zaplanowany',
-  finished: 'Zakończony',
-  unfinished: 'Mecz rozpoczęty, ale niedokończony',
-};
-// Keep the component type stable: polling must update scores without remounting
-// the card and restarting its live animation or losing keyboard focus.
-function MatchCard({
-  m,
-  l,
-  final = false,
-  archived,
-  admin,
-  isDemo,
-  scope,
-  edit,
-  open,
-  board,
-  serverTime,
-}: {
-  m: Match;
-  l: Level;
-  final?: boolean;
-  archived: boolean;
-  admin: boolean;
-  isDemo: boolean;
-  scope: string | null;
-  edit: (m: Match) => void;
-  open: (type: Modal, id?: string) => void;
-  board: Board;
-  serverTime?: string;
-}) {
-  const waiting = !m.players.every(Boolean),
-    showPoints =
-      !!m.refereeEnabled &&
-      (m.status === 'live' || m.status === 'unfinished') &&
-      matchWinner(m.sets, matchFormat(l, m)) === null;
-  return (
-    <article
-      className={`match-card ${showPoints ? 'point-scored' : ''} ${m.status === 'live' ? 'active-match' : ''} ${final ? 'final-card' : ''}`}
-    >
-      <>
-        {final && (
-          <div className="final-highlight">
-            <div>
-              <strong>FINAŁ</strong>
-              <span>Mecz o 1. miejsce</span>
-            </div>
-            <span className="final-trophy">
-              <Trophy aria-hidden="true" size={27} />
-            </span>
-          </div>
-        )}
-      </>
-      <div className="card-top">
-        <span className={`status ${m.status}`}>
-          {m.status === 'live' && <LiveBall />}
-          {waiting
-            ? matchSources(l, m).length
-              ? 'Oczekuje na poprzednią rundę'
-              : 'Oczekuje na pary'
-            : labels[m.status]}
-        </span>
-        <span className="court">{courtLabel(m.court, board)}</span>
-      </div>
-      <div className="match-format-label">{matchFormatLabel(l, m)}</div>
-      <div className="score-labels">
-        <span className="match-stage-name">
-          {m.stage}
-          <YoutubeLink url={m.youtubeUrl} />
-        </span>
-        <div>
-          <span>S1</span>
-          <span>S2</span>
-          <span>{matchFormat(l, m) === 'super' ? 'STB' : 'S3'}</span>
-          {showPoints && (
-            <span className="point-column-label">
-              {pointMode(m, matchFormat(l, m)) === 'game' ? 'Pkt' : 'TB'}
-            </span>
-          )}
-        </div>
-      </div>
-      {m.players.map((p, i) => (
-        <div className={`player-row ${m.winner === i ? 'winner' : ''}`} key={i}>
-          <div className="player-info">
-            <span className="avatar">
-              {p ? (
-                p
-                  .split(' ')
-                  .map((n) => n[0])
-                  .slice(0, 2)
-                  .join('')
-              ) : (
-                <LockKeyhole size={16} />
-              )}
-            </span>
-            <span>
-              {seededPlayerName(m, i) || playerPlaceholder(l, m, i)}
-              {m.winner === i && (
-                <span className="winner-check" role="img" aria-label="Zwycięzca">
-                  ✓
-                </span>
-              )}
-            </span>
-          </div>
-          <div className="numbers">
-            {[0, 1, 2].map((s) => (
-              <span
-                key={s}
-                className={`${m.sets[s] && setWinner(m.sets[s], matchFormat(l, m) === 'super' && s === 2) === i ? 'won-set' : ''} ${s === m.sets.length - 1 && m.status === 'live' ? 'current-set' : ''}`}
-              >
-                {waiting ? '–' : (m.sets[s]?.[i] ?? '–')}
-              </span>
-            ))}
-            {showPoints && (
-              <span className="point-column-value">{pointLabels(m, matchFormat(l, m))[i]}</span>
-            )}
-          </div>
-        </div>
-      ))}
-      {m.refereeEnabled && (
-        <div className="referee-card-label">
-          <ShieldCheck size={13} /> Mecz sędziowany
-        </div>
-      )}
-      <div className="card-bottom">
-        <span>
-          <Clock3 size={14} />
-          {m.date ? dateLabel(m.date) : 'Data do ustalenia'}
-        </span>
-      </div>
-      <MatchTiming match={m} serverTime={serverTime} />
 
-      {!archived &&
-        !isDemo &&
-        (admin || scopeMatchId(scope) === m.id) &&
-        !hasMatchSchedule(m, board) && (
-          <p className="score-schedule-note">{MATCH_SCHEDULE_REQUIRED}</p>
-        )}
-      {!archived &&
-        ((admin && !isDemo) || scopeMatchId(scope) === m.id || (isDemo && m.status === 'live')) && (
-          <div className="card-controls">
-            <button
-              onClick={() => edit(m)}
-              disabled={waiting || (!isDemo && !hasMatchSchedule(m, board))}
-            >
-              <Plus size={15} />
-              {isDemo
-                ? 'Wypróbuj wpisywanie'
-                : canEditMatch(m, scope)
-                  ? 'Wpisz wynik'
-                  : 'Podgląd wyniku'}
-            </button>
-            {admin && !isDemo && (
-              <button
-                className="match-settings"
-                aria-label={`Edytuj mecz: ${m.stage}, ${l.name}`}
-                onClick={() => open('details', m.id)}
-              >
-                <Settings2 size={16} /> Edytuj mecz
-              </button>
-            )}
-          </div>
-        )}
-    </article>
-  );
-}
 export default function Home() {
   const [data, setData] = useState<Data>(empty),
     [loading, setLoading] = useState(true),
@@ -1123,141 +857,20 @@ export default function Home() {
             </p>
           </section>
         )}
-        {view === 'results' && (
-          <>
-            <div className="results-top">
-              <h2>
-                Tablica wyników <span>{isDemo ? 'Podgląd' : resultMatchCount + ' meczów'}</span>
-              </h2>
-              <button className="text-button" onClick={() => copy(window.location.origin)}>
-                <Copy size={16} />
-                <span>Udostępnij link</span>
-              </button>
-            </div>
-            <Tabs value={activeLevelFilter} onValueChange={setFilter} className="level-tabs">
-              <TabsList aria-label="Poziom rozgrywek">
-                <TabsTrigger value="all">Wszystkie poziomy</TabsTrigger>
-                {resultLevels.map((l) => (
-                  <TabsTrigger key={l.id} value={l.id}>
-                    {l.name}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
-            {displayLoading ? (
-              <div className="loading-grid">
-                {[0, 1, 2].map((i) => (
-                  <Skeleton key={i} className="h-64 rounded-2xl" />
-                ))}
-              </div>
-            ) : resultLevels.length === 0 ? (
-              <div className="schedule-empty">
-                Organizator nie ustawił jeszcze par na żadnym poziomie.
-              </div>
-            ) : (
-              resultLevels
-                .filter((l) => activeLevelFilter === 'all' || activeLevelFilter === l.id)
-                .map((l) => (
-                  <section className="level-section" key={l.id}>
-                    <div className="level-title">
-                      <div>
-                        <span className="level-icon">
-                          <Trophy size={17} />
-                        </span>
-                        <h3>{l.name}</h3>
-                        <span>
-                          {l.matches[0].players.some(Boolean)
-                            ? `${l.startSize || 4} ${isDoubles(l) ? 'par' : 'zawodników'} · ${l.matches.length} ${l.matches.length === 4 ? 'mecze' : 'meczów'}`
-                            : 'Pary do ustalenia'}
-                        </span>
-                      </div>
-                      <span className="format-label">
-                        {admin &&
-                          !l.matches.some(
-                            (m) => m.configured || m.players.some(Boolean) || m.currentCode,
-                          ) && (
-                            <button className="text-button" onClick={() => open('create', l.id)}>
-                              <Plus size={15} /> Ustaw drabinkę
-                            </button>
-                          )}
-                        {new Set(l.matches.map((m) => matchFormat(l, m))).size > 1
-                          ? 'Format zależny od rundy'
-                          : matchFormatLabel(l, l.matches[0])}
-                      </span>
-                    </div>
-                    {(l.bracketConfigured ||
-                      l.matches.some(
-                        (m) =>
-                          m.configured ||
-                          m.players.some(Boolean) ||
-                          m.court ||
-                          m.date ||
-                          m.time ||
-                          m.currentCode ||
-                          m.status !== 'scheduled',
-                      )) && (
-                      <>
-                        <HorizontalBracket
-                          level={l}
-                          onEdit={admin ? (m) => open('details', m.id) : undefined}
-                        />
-                        {(l.startSize || 4) === 4 ? (
-                          <div className="bracket-layout">
-                            <div className="semis">
-                              <div className="round-title">
-                                <span>01</span> PÓŁFINAŁY
-                              </div>
-                              <div className="semis-grid">
-                                {l.matches.slice(0, 2).map((m) => (
-                                  <MatchCard {...cardProps} key={m.id} m={m} l={l} />
-                                ))}
-                              </div>
-                            </div>
-                            <div className="bracket-arrow">
-                              <ChevronRight size={22} />
-                            </div>
-                            <div className="final">
-                              <div className="round-title">
-                                <span>02</span> FINAŁ <Trophy size={14} />
-                              </div>
-                              <MatchCard {...cardProps} m={l.matches[2]} l={l} final />
-                              {l.matches[3] && (
-                                <>
-                                  <div className="round-title bronze-title">
-                                    <span>03</span> O 3. MIEJSCE
-                                  </div>
-                                  <MatchCard {...cardProps} m={l.matches[3]} l={l} />
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="extended-bracket">
-                            {bracketRounds(l).map((round) => (
-                              <section className="bracket-round-section" key={round.size}>
-                                <h4 className="round-title">{round.title}</h4>
-                                <div className="round-matches">
-                                  {round.matches.map((m) => (
-                                    <MatchCard
-                                      {...cardProps}
-                                      key={m.id}
-                                      m={m}
-                                      l={l}
-                                      final={m.stage === 'Finał'}
-                                    />
-                                  ))}
-                                </div>
-                              </section>
-                            ))}
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </section>
-                ))
-            )}
-          </>
-        )}
+        <ResultsView
+          view={view}
+          board={board}
+          displayLoading={displayLoading}
+          cardProps={cardProps}
+          isDemo={isDemo}
+          resultMatchCount={resultMatchCount}
+          copy={copy}
+          activeLevelFilter={activeLevelFilter}
+          setFilter={setFilter}
+          resultLevels={resultLevels}
+          admin={admin}
+          open={open}
+        />
         {view === 'summary' &&
           (displayLoading ? (
             <Skeleton className="h-64 rounded-lg" />
@@ -1265,200 +878,33 @@ export default function Home() {
             <FinalsSummary board={board} />
           ))}
         {view === 'announcements' && <Announcements admin={isOrganizer} />}
-        {view === 'schedule' && (
-          <section className="schedule-view" aria-label="Plan gier na kortach">
-            <div className="results-top">
-              <h2>Plan gier na kortach</h2>
-            </div>
-            <p className="schedule-note">Mecze według kortów, w kolejności godzin rozpoczęcia.</p>
-            {displayLoading ? (
-              <Skeleton className="h-64 rounded-lg" />
-            ) : schedule.length === 0 ? (
-              <div className="schedule-empty">Organizator nie ustawił jeszcze dat finałów.</div>
-            ) : (
-              <Tabs
-                className="schedule-date-tabs"
-                value={activeDate}
-                onValueChange={setSelectedDate}
-              >
-                <TabsList aria-label="Data finałów">
-                  {schedule.map((day) => (
-                    <TabsTrigger key={day.date} value={day.date} aria-label={dateLabel(day.date)}>
-                      {dateLabel(day.date).slice(0, 5)}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-                <Tabs
-                  value={courtFilter}
-                  onValueChange={setCourtFilter}
-                  className="court-filter-tabs"
-                >
-                  <TabsList aria-label="Wybierz kort">
-                    <TabsTrigger value="all">Wszystkie korty</TabsTrigger>
-                    {courtEntries(board).map((c) => (
-                      <TabsTrigger key={c.id} value={c.id}>
-                        {c.label}
-                      </TabsTrigger>
-                    ))}
-                  </TabsList>
-                </Tabs>
-                {schedule.map((day) => (
-                  <TabsContent value={day.date} className="schedule-day" key={day.date}>
-                    <div className={`court-grid ${courtFilter !== 'all' ? 'single-court' : ''}`}>
-                      {day.courts
-                        .filter(
-                          (court) => courtFilter === 'all' || String(court.number) === courtFilter,
-                        )
-                        .map((court) => (
-                          <section className="court-column" key={court.number}>
-                            <div className="court-heading">
-                              <h4>{courtLabel(String(court.number), board)}</h4>
-                              <span>
-                                {court.matches.some(({ m }) => m.status === 'live')
-                                  ? 'Mecz w toku'
-                                  : court.matches.some(({ m }) => m.status === 'scheduled')
-                                    ? 'Oczekuje na mecze'
-                                    : court.matches.length
-                                      ? 'Mecze zakończone'
-                                      : 'Brak meczów'}
-                              </span>
-                            </div>
-                            {court.matches.length ? (
-                              court.matches.map(({ m, l }) => (
-                                <div className="schedule-match" key={m.id}>
-                                  <div className="schedule-slot">
-                                    <strong>{m.time || 'Godzina do ustalenia'}</strong>
-                                    <span>{l.name}</span>
-                                  </div>
-                                  <MatchCard
-                                    {...cardProps}
-                                    m={m}
-                                    l={l}
-                                    final={m.stage === 'Finał'}
-                                  />
-                                </div>
-                              ))
-                            ) : (
-                              <p className="court-empty">Brak zaplanowanych meczów</p>
-                            )}
-                          </section>
-                        ))}
-                    </div>
-                  </TabsContent>
-                ))}
-              </Tabs>
-            )}
-            {!loading &&
-              all.some(
-                (m) =>
-                  (!courtNumber(m.court, board) || !board.finalsDates?.includes(m.date || '')) &&
-                  m.players.some(Boolean),
-              ) && (
-                <p className="schedule-note">
-                  Mecze bez przypisanego kortu lub terminu znajdziesz w zakładce „Tablica wyników”.
-                </p>
-              )}
-          </section>
-        )}
-        {view === 'live' && !archived && (
-          <section className="live-view" aria-label="Wyniki na żywo">
-            <div className="results-top live-view-heading">
-              <h2>Wyniki na żywo</h2>
-              <button className="button outline" disabled={displayLoading} onClick={enterTv}>
-                <Tv size={18} /> Widok TV
-              </button>
-            </div>
-            <p className="schedule-note">Teraz na kortach i kolejne mecze w kolejce.</p>
-            {displayLoading ? (
-              <Skeleton className="h-64 rounded-lg" />
-            ) : (
-              <>
-                {!hasLive && (
-                  <p className="live-empty-message">Obecnie żaden mecz nie jest rozgrywany</p>
-                )}
-                {!hasLive && !hasWaiting ? (
-                  <div className="live-empty-state">
-                    <p>Na dziś nie ma kolejnych zaplanowanych meczów</p>
-                    <button
-                      className="button outline"
-                      onClick={() => {
-                        setSelectedDate(today);
-                        setView('schedule');
-                      }}
-                    >
-                      Zobacz plan gier <ChevronRight size={17} />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="court-grid live-court-grid">
-                    {liveCourtList.map((court) => (
-                      <section className="court-column" key={court.number}>
-                        <div className="court-heading">
-                          <h4>{courtLabel(String(court.number), board)}</h4>
-                          <span>{court.live.length ? 'W grze' : 'Brak meczu na żywo'}</span>
-                        </div>
-                        {court.live.map(({ m, l }) => (
-                          <div className="live-current-match" key={m.id}>
-                            <div className="schedule-slot">
-                              <span>{l.name}</span>
-                            </div>
-                            <MatchCard {...cardProps} m={m} l={l} final={m.stage === 'Finał'} />
-                          </div>
-                        ))}
-                        {court.waiting.length > 0 ? (
-                          <>
-                            <h5 className="live-queue-title">
-                              {court.live.length ? 'KOLEJNE NA TYM KORCIE' : 'OCZEKUJĄCE DZIŚ'}
-                            </h5>
-                            <ol className="live-queue">
-                              {court.waiting.map(({ m, l }, i) => (
-                                <li key={m.id}>
-                                  <div className="live-queue-time">
-                                    <strong>{m.time || '—'}</strong>
-                                    {m.date !== today && <span>{dateLabel(m.date)}</span>}
-                                  </div>
-                                  <div>
-                                    <div className="live-queue-meta">
-                                      <span>Oczekujący</span>
-                                      {i === 0 && <small>Następny mecz</small>}
-                                      <YoutubeLink url={m.youtubeUrl} />
-                                    </div>
-                                    <p className="live-queue-players">
-                                      {m.players.map((p, index) => (
-                                        <span key={index}>
-                                          {seededPlayerName(m, index) ||
-                                            playerPlaceholder(l, m, index)}
-                                        </span>
-                                      ))}
-                                    </p>
-                                    <p className="live-queue-level">
-                                      {l.name} · {m.stage}
-                                    </p>
-                                  </div>
-                                </li>
-                              ))}
-                            </ol>
-                          </>
-                        ) : (
-                          <p className="court-empty">
-                            {court.live.length
-                              ? 'Brak kolejnych meczów w tym dniu.'
-                              : 'Brak oczekujących meczów na dziś.'}
-                          </p>
-                        )}
-                      </section>
-                    ))}
-                  </div>
-                )}
-                {(hasLive || hasWaiting) && (
-                  <p className="live-plan-note">
-                    Godziny według planu. Kolejny mecz rozpocznie się po zwolnieniu kortu.
-                  </p>
-                )}
-              </>
-            )}
-          </section>
-        )}
+        <ScheduleView
+          view={view}
+          board={board}
+          displayLoading={displayLoading}
+          cardProps={cardProps}
+          schedule={schedule}
+          activeDate={activeDate}
+          setSelectedDate={setSelectedDate}
+          courtFilter={courtFilter}
+          setCourtFilter={setCourtFilter}
+          loading={loading}
+          all={all}
+        />
+        <LiveView
+          view={view}
+          board={board}
+          displayLoading={displayLoading}
+          cardProps={cardProps}
+          archived={archived}
+          enterTv={enterTv}
+          hasLive={hasLive}
+          hasWaiting={hasWaiting}
+          today={today}
+          setSelectedDate={setSelectedDate}
+          setView={setView}
+          liveCourtList={liveCourtList}
+        />
         {!archived && (
           <section className="courtside">
             <div className="courtside-icon">
@@ -1694,49 +1140,13 @@ export default function Home() {
             </form>
           )}
           {(modal === 'login' || modal === 'referee-login' || modal === 'admin') && (
-            <form onSubmit={login} className="stack-form">
-              <label>
-                {modal === 'referee-login'
-                  ? 'Kod sędziego'
-                  : modal === 'login'
-                    ? 'Kod meczu'
-                    : 'Kod organizatora'}
-              </label>
-              {modal !== 'admin' ? (
-                <InputOTP
-                  aria-label={modal === 'referee-login' ? 'Kod sędziego' : 'Kod meczu'}
-                  maxLength={5}
-                  inputMode="numeric"
-                  pattern="^[0-9]*$"
-                  value={code}
-                  onChange={(v) => setCode(v.toUpperCase())}
-                  containerClassName="otp-container"
-                >
-                  <InputOTPGroup>
-                    {Array.from({ length: 5 }, (_, i) => (
-                      <InputOTPSlot key={i} index={i} />
-                    ))}
-                  </InputOTPGroup>
-                </InputOTP>
-              ) : (
-                <input
-                  aria-label="Kod organizatora"
-                  type="password"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  autoComplete="current-password"
-                  autoFocus
-                  required
-                />
-              )}
-              <button className="button dark full" disabled={busy || code.length < 5}>
-                {busy ? <Loader2 className="spin" size={18} /> : <KeyRound size={18} />} Odblokuj{' '}
-                {modal === 'admin' ? 'panel' : 'wpisywanie wyniku'}
-              </button>
-              <p className="form-note">
-                <LockKeyhole size={14} /> Widzowie nie potrzebują kodu.
-              </p>
-            </form>
+            <AccessCodeForm
+              role={modal}
+              code={code}
+              onCodeChange={setCode}
+              onSubmit={login}
+              busy={busy}
+            />
           )}
           {modal === 'create' && (
             <BracketSetup
@@ -1830,262 +1240,32 @@ export default function Home() {
               </button>
             </div>
           )}
-          {modal === 'editor' && match && !canEditMatch(match, data.scope) && !demoEdit && (
-            <>
-              <p className="editor-hint">
-                {match.refereeEnabled
-                  ? 'Ten mecz prowadzi sędzia. Wynik zmieniają sędzia i organizator.'
-                  : 'Zaloguj się kodem meczu, aby edytować wynik.'}
-              </p>
-              {level && <MatchCard {...cardProps} m={match} l={level} archived />}
-              <button className="button outline full" onClick={() => open('login', match.id)}>
-                Wpisz inny kod
-              </button>
-            </>
-          )}
-          {modal === 'editor' &&
-            match &&
-            canEditMatch(match, data.scope) &&
-            !demoEdit &&
-            !hasMatchSchedule(match, board) && (
-              <>
-                <p className="editor-hint" role="status">
-                  {MATCH_SCHEDULE_REQUIRED}
-                </p>
-                {level && <MatchCard {...cardProps} m={match} l={level} archived />}
-                {admin && (
-                  <button className="button dark full" onClick={() => open('details', match.id)}>
-                    <Settings2 size={17} /> Uzupełnij dane meczu
-                  </button>
-                )}
-              </>
-            )}
-          {modal === 'editor' &&
-            match &&
-            (canEditMatch(match, data.scope) || demoEdit) &&
-            (demoEdit || hasMatchSchedule(match, board)) && (
-              <div className="editor">
-                {match.status !== 'scheduled' && (
-                  <div className="editor-setline">
-                    {match.sets.map((s, i) => (
-                      <span key={i}>
-                        {i === 2 && scoringFormat === 'super' ? 'STB' : `Set ${i + 1}`}{' '}
-                        <strong>
-                          {s[0]} : {s[1]}
-                        </strong>
-                      </span>
-                    ))}
-                  </div>
-                )}
-                {match.status === 'finished' ? (
-                  <div className="winner-banner">
-                    <span className="winner-check large" aria-hidden="true">
-                      ✓
-                    </span>
-                    <strong>Wygrywa {seededPlayerName(match, match.winner!)}</strong>
-                    <span>
-                      {match.finishedTime
-                        ? `Zakończono o ${match.finishedTime}`
-                        : 'Wynik został zatwierdzony.'}
-                    </span>
-                  </div>
-                ) : match.status === 'scheduled' ? (
-                  <div className="start-match-panel">
-                    <table
-                      className="start-match-scoreboard"
-                      aria-label="Zawodnicy i wynik przed rozpoczęciem meczu"
-                    >
-                      <thead>
-                        <tr>
-                          <th scope="col">{level && isDoubles(level) ? 'Para' : 'Zawodnik'}</th>
-                          {[0, 1, 2].map((i) => (
-                            <th scope="col" key={i}>
-                              {i === 2 && scoringFormat === 'super' ? 'STB' : `S${i + 1}`}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {match.players.map((p, i) => (
-                          <tr key={i}>
-                            <th scope="row">
-                              <span className="start-player-name">
-                                {seededPlayerName(match, i) || `Zawodnik ${i + 1} — do ustalenia`}
-                              </span>
-                            </th>
-                            {[0, 1, 2].map((set) => (
-                              <td key={set} className={set === 0 ? 'start-current-score' : ''}>
-                                {match.sets[set]?.[i] ?? '–'}
-                              </td>
-                            ))}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    <p>
-                      {match.players.every(Boolean)
-                        ? 'Kliknij, gdy zaczniecie grać. Widzowie zobaczą „W grze” już przy wyniku 0:0.'
-                        : 'Poczekaj na ustalenie obydwu zawodników.'}
-                    </p>
-                    <button
-                      className="button lime full"
-                      disabled={busy || !match.players.every(Boolean) || (!online && !demoEdit)}
-                      onClick={() => score('start')}
-                    >
-                      <Play size={19} /> Rozpocznij mecz
-                    </button>
-                  </div>
-                ) : match.status === 'unfinished' ? (
-                  <div className="unfinished-match-panel">
-                    <p>
-                      <strong>Mecz rozpoczęty, ale niedokończony</strong>
-                    </p>
-                    <p>
-                      Minęło 12 godzin od rozpoczęcia. Wynik został zachowany; mecz nie jest już
-                      pokazywany na żywo.
-                    </p>
-                    {match.refereeEnabled && !ready && (
-                      <p>
-                        Ostatnie punkty:{' '}
-                        <strong>{pointLabels(match, scoringFormat).join(' : ')}</strong>
-                      </p>
-                    )}
-                    {!ready && (
-                      <button
-                        className="button lime full"
-                        disabled={busy || !online}
-                        onClick={() => score('start')}
-                      >
-                        <Play size={19} /> Wznów mecz
-                      </button>
-                    )}
-                    <p>
-                      {ready
-                        ? 'Możesz zatwierdzić zapisany wynik poniżej.'
-                        : 'Wznów tylko wtedy, gdy wracacie do gry. Od wznowienia biegnie nowy limit 12 godzin.'}
-                    </p>
-                  </div>
-                ) : match.refereeEnabled ? (
-                  <RefereeScoring
-                    match={match}
-                    format={scoringFormat}
-                    busy={busy}
-                    online={online}
-                    onPoint={(i) => score('point', i)}
-                  />
-                ) : (
-                  <>
-                    <div className="editor-hint">
-                      {ready
-                        ? 'Koniec meczu — zatwierdź wynik poniżej.'
-                        : !match.players.every(Boolean)
-                          ? 'Poczekaj na rozstrzygnięcie półfinałów.'
-                          : superTB
-                            ? 'Super tie-break: wpisuj punkty, do 10 z przewagą 2.'
-                            : tieBreak
-                              ? '6:6 — po tie-breaku wskaż jego zwycięzcę.'
-                              : 'Po zakończonym gemie kliknij zwycięzcę.'}
-                    </div>
-                    <div className="scoring-grid">
-                      {match.players.map((p, i) => (
-                        <div key={i}>
-                          <span>
-                            {seededPlayerName(match, i) ||
-                              `${match.stage === 'O 3. miejsce' ? 'Przegrany' : 'Zwycięzca'} półfinału ${i + 1}`}
-                          </span>
-                          <strong>{newSet ? 0 : current?.[i]}</strong>
-                          <button
-                            className="button lime"
-                            disabled={
-                              busy ||
-                              ready ||
-                              !match.players.every(Boolean) ||
-                              (!online && !demoEdit)
-                            }
-                            onClick={() => score('add', i)}
-                          >
-                            <Plus size={21} />
-                            {superTB ? 'Punkt' : tieBreak ? 'Tie-break' : 'Gem'}
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                )}
-                {ready && match.status !== 'finished' && (
-                  <label className="finish-time-field">
-                    Data zakończenia meczu
-                    <input
-                      type="date"
-                      value={finishedDate}
-                      onChange={(e) => setFinishedDate(e.target.value)}
-                      required
-                      disabled={busy}
-                    />
-                  </label>
-                )}
-                {ready && match.status !== 'finished' && (
-                  <label className="finish-time-field">
-                    Godzina zakończenia meczu
-                    <input
-                      type="time"
-                      value={finishedTime}
-                      onChange={(e) => setFinishedTime(e.target.value)}
-                      required
-                      disabled={busy}
-                    />
-                    <span>
-                      Czas lokalny w Polsce. Możesz poprawić godzinę przed zatwierdzeniem.
-                    </span>
-                  </label>
-                )}
-                <div className="editor-actions">
-                  <button
-                    className="button outline"
-                    disabled={busy || !(demoEdit ? match.history?.length : (match as any).canUndo)}
-                    onClick={() => score('undo')}
-                  >
-                    <Undo2 size={17} /> {match.refereeEnabled ? 'Cofnij ostatnią zmianę' : 'Cofnij'}
-                  </button>
-                  {ready && match.status !== 'finished' && (
-                    <button
-                      className="button dark"
-                      disabled={
-                        busy ||
-                        !/^([01]\d|2[0-3]):[0-5]\d$/.test(finishedTime) ||
-                        (!online && !demoEdit)
-                      }
-                      onClick={() => score('finish')}
-                    >
-                      <CheckCheck size={17} /> Zakończ mecz
-                    </button>
-                  )}
-                </div>
-                <p className="form-note">
-                  {busy ? (
-                    <>
-                      <Loader2 size={14} className="spin" /> Zapisuję…
-                    </>
-                  ) : demoEdit ? (
-                    'Tryb próbny · wynik nie jest publikowany'
-                  ) : (
-                    <>
-                      <CheckCheck size={15} /> Każda zmiana jest zapisywana na bieżąco.
-                    </>
-                  )}
-                </p>
-                {data.scope && data.scope !== 'admin' && !demoEdit && (
-                  <button
-                    className="text-button"
-                    onClick={async () => {
-                      if (await post('logout')) setModal(null);
-                    }}
-                  >
-                    Zablokuj edycję na tym urządzeniu
-                  </button>
-                )}
-              </div>
-            )}
+          <ScoreEditor
+            modal={modal}
+            match={match}
+            level={level}
+            scope={data.scope}
+            demoEdit={demoEdit}
+            board={board}
+            cardProps={cardProps}
+            open={open}
+            admin={admin}
+            scoringFormat={scoringFormat}
+            current={current}
+            superTB={superTB}
+            tieBreak={tieBreak}
+            ready={ready}
+            newSet={newSet}
+            busy={busy}
+            online={online}
+            score={score}
+            finishedDate={finishedDate}
+            setFinishedDate={setFinishedDate}
+            finishedTime={finishedTime}
+            setFinishedTime={setFinishedTime}
+            post={post}
+            setModal={setModal}
+          />
           {modal === 'details' && match && (
             <form
               className="stack-form"

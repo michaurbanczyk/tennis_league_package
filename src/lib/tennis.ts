@@ -37,6 +37,7 @@ export type Match = Score & {
   codeFormat?: 'pin5';
   needsCodeUpgrade?: boolean;
   history?: Score[];
+  canUndo?: boolean;
   configured?: boolean;
   updated?: string;
 };
