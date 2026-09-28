@@ -1,0 +1,51 @@
+/* Full header artwork with working access controls above the image. */
+body[data-league='relaksmisja'] .rtl-header-hero {
+  position: relative;
+  background: #07142b;
+}
+body[data-league='relaksmisja'] .rtl-header-hero .header-inner {
+  display: block;
+  max-width: none;
+  min-height: 0;
+  padding: 0;
+}
+body[data-league='relaksmisja'] .rtl-header-hero .brand {
+  display: block;
+  width: 100%;
+}
+body[data-league='relaksmisja'] .rtl-header-hero .brand .rtl-header-art {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 0;
+}
+body[data-league='relaksmisja'] .rtl-header-hero .header-access-wrap {
+  position: absolute;
+  z-index: 1;
+  top: 12px;
+  right: 20px;
+  max-width: calc(100% - 40px);
+  padding: 0;
+}
+body[data-league='relaksmisja'] .rtl-header-hero .header-access-wrap button {
+  background: #07142bb8;
+  color: #fff;
+}
+body[data-league='relaksmisja'] .rtl-header-hero .header-access-wrap button:hover {
+  background: #1e2d59;
+}
+@media (max-width: 600px) {
+  body[data-league='relaksmisja'] .rtl-header-hero {
+    display: flex;
+    flex-direction: column;
+  }
+  body[data-league='relaksmisja'] .rtl-header-hero .header-inner {
+    order: -1;
+  }
+  body[data-league='relaksmisja'] .rtl-header-hero .header-access-wrap {
+    position: static;
+    max-width: none;
+    width: 100%;
+    padding: 8px;
+  }
+}

@@ -1,5 +1,6 @@
 'use client';
 import './finals-photo.css';
+import './rtl-header.css';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { AccessCodeForm } from '@/components/tennis/access-code-form';
 import { ScoreEditor } from '@/components/tennis/score-editor';
@@ -552,41 +553,54 @@ export default function Home() {
     <>
       <Toaster position="top-center" richColors />
       <header className="site-header">
-        <div className="header-access-wrap">
-          <div className="footer-access">
-            {!archived && (
-              <button
-                className="footer-referee"
-                onClick={() =>
-                  data.scope && data.scope !== 'admin'
-                    ? open('editor', scopeMatchId(data.scope)!)
-                    : open('login')
-                }
-              >
-                <KeyRound size={17} />
-                <span>{data.scope && data.scope !== 'admin' ? 'Mój mecz' : 'Wpisz wynik'}</span>
-              </button>
-            )}
-            <button
-              className="footer-organizer"
-              onClick={() => (isOrganizer ? post('logout') : open('admin'))}
-            >
-              <ShieldCheck size={16} aria-hidden="true" />
-              <span>{isOrganizer ? 'Wyloguj organizatora' : 'Organizator'}</span>
-            </button>
-            {isRtl &&
-              !archived &&
-              data.levels.some((l) => l.matches.some((m) => m.refereeEnabled)) && (
-                <button className="footer-referee" onClick={() => open('referee-login')}>
-                  <ShieldCheck size={16} aria-hidden="true" /> Sędzia
+        <div className={isRtl ? 'rtl-header-hero' : undefined}>
+          <div className="header-access-wrap">
+            <div className="footer-access">
+              {!archived && (
+                <button
+                  className="footer-referee"
+                  onClick={() =>
+                    data.scope && data.scope !== 'admin'
+                      ? open('editor', scopeMatchId(data.scope)!)
+                      : open('login')
+                  }
+                >
+                  <KeyRound size={17} />
+                  <span>{data.scope && data.scope !== 'admin' ? 'Mój mecz' : 'Wpisz wynik'}</span>
                 </button>
               )}
+              <button
+                className="footer-organizer"
+                onClick={() => (isOrganizer ? post('logout') : open('admin'))}
+              >
+                <ShieldCheck size={16} aria-hidden="true" />
+                <span>{isOrganizer ? 'Wyloguj organizatora' : 'Organizator'}</span>
+              </button>
+              {isRtl &&
+                !archived &&
+                data.levels.some((l) => l.matches.some((m) => m.refereeEnabled)) && (
+                  <button className="footer-referee" onClick={() => open('referee-login')}>
+                    <ShieldCheck size={16} aria-hidden="true" /> Sędzia
+                  </button>
+                )}
+            </div>
           </div>
-        </div>
-        <div className="header-inner">
-          <a className="brand" href="/" aria-label={brand.name + ' — strona główna'}>
-            <LeagueHeader />
-          </a>
+          <div className="header-inner">
+            <a className="brand" href="/" aria-label={brand.name + ' — strona główna'}>
+              {isRtl ? (
+                <img
+                  className="rtl-header-art"
+                  src="/rtl-finals-banner.png"
+                  width={1200}
+                  height={420}
+                  alt="RTL Finals — mecze, które znaczą więcej"
+                  fetchPriority="high"
+                />
+              ) : (
+                <LeagueHeader />
+              )}
+            </a>
+          </div>
         </div>
         <MatchSearch
           key={selectedArchive || data.season || 'current'}
