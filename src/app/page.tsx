@@ -624,55 +624,63 @@ export default function Home() {
       {!isRtl && (
         <div className="tennis-banner" role="img" aria-label="Rakieta tenisowa — Smart Liga" />
       )}
-      <main className="main-wrap">
-        <section className={`heading${isRtl ? ' heading-below-photo' : ''}`}>
-          {!isRtl && (
-            <div>
-              <div className="heading-title">
-                <span className="heading-symbol">
-                  <Trophy size={26} />
-                </span>
-                <div>
-                  <h1>
-                    {brand.title}
-                    {board.season && (
-                      <span className="season-heading">
-                        {isRtl ? '' : 'Sezon '}
-                        {board.season}
-                      </span>
-                    )}
-                  </h1>
-                  {!isRtl && <p>Półfinały · finały · mecze o 3. miejsce</p>}
+      <main className={`main-wrap${isRtl ? ' finals-main' : ''}`}>
+        {!isRtl && (
+          <section className="heading">
+            {!isRtl && (
+              <div>
+                <div className="heading-title">
+                  <span className="heading-symbol">
+                    <Trophy size={26} />
+                  </span>
+                  <div>
+                    <h1>
+                      {brand.title}
+                      {board.season && (
+                        <span className="season-heading">
+                          {isRtl ? '' : 'Sezon '}
+                          {board.season}
+                        </span>
+                      )}
+                    </h1>
+                    {!isRtl && <p>Półfinały · finały · mecze o 3. miejsce</p>}
+                  </div>
                 </div>
               </div>
+            )}
+            <div className={`sync ${online ? '' : 'offline'}`} role="status">
+              {!archived && (online ? <span className="live-dot" /> : <WifiOff size={16} />)}
+              <div>
+                <strong>
+                  {archived
+                    ? 'Archiwum sezonu'
+                    : loading
+                      ? 'Łączenie…'
+                      : online
+                        ? 'Automatyczne odświeżanie'
+                        : 'Brak połączenia'}
+                </strong>
+                <span>
+                  {archived
+                    ? 'Wyniki do przeglądania'
+                    : loading
+                      ? 'Pobieramy wyniki'
+                      : online
+                        ? 'Co 3 sekundy'
+                        : lastSync
+                          ? 'Wyświetlamy ostatnio pobrane wyniki'
+                          : 'Próbujemy połączyć się ponownie'}
+                </span>
+              </div>
             </div>
-          )}
-          <div className={`sync ${online ? '' : 'offline'}`} role="status">
-            {!archived && (online ? <span className="live-dot" /> : <WifiOff size={16} />)}
-            <div>
-              <strong>
-                {archived
-                  ? 'Archiwum sezonu'
-                  : loading
-                    ? 'Łączenie…'
-                    : online
-                      ? 'Automatyczne odświeżanie'
-                      : 'Brak połączenia'}
-              </strong>
-              <span>
-                {archived
-                  ? 'Wyniki do przeglądania'
-                  : loading
-                    ? 'Pobieramy wyniki'
-                    : online
-                      ? 'Co 3 sekundy'
-                      : lastSync
-                        ? 'Wyświetlamy ostatnio pobrane wyniki'
-                        : 'Próbujemy połączyć się ponownie'}
-              </span>
-            </div>
-          </div>
-        </section>
+          </section>
+        )}
+        {isRtl && !archived && !loading && !online && (
+          <p className="finals-connection-warning" role="status">
+            <WifiOff size={16} aria-hidden="true" /> Brak połączenia — wyświetlamy ostatnio pobrane
+            wyniki.
+          </p>
+        )}
         {data.archives?.length || archived ? (
           <div className="season-picker">
             <span id="season-picker-label">Sezon</span>
