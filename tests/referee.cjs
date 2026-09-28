@@ -7,9 +7,10 @@ const ts = createRequire(projectRoot + '/package.json')('typescript');
 function app(root) {
   const db = new DatabaseSync(':memory:');
   db.exec(
-    'CREATE TABLE boards(id TEXT PRIMARY KEY,data TEXT NOT NULL,revision INTEGER NOT NULL); CREATE TABLE sessions(token TEXT PRIMARY KEY,scope TEXT,expires INTEGER); CREATE TABLE attempts(key TEXT PRIMARY KEY,count INTEGER,expires INTEGER);',
+    'CREATE TABLE boards(id TEXT PRIMARY KEY,data TEXT NOT NULL,revision INTEGER NOT NULL); CREATE TABLE match_rows(board_id TEXT NOT NULL,id TEXT NOT NULL,data TEXT NOT NULL,revision INTEGER NOT NULL,PRIMARY KEY(board_id,id)); CREATE TABLE sessions(token TEXT PRIMARY KEY,scope TEXT,expires INTEGER); CREATE TABLE attempts(key TEXT PRIMARY KEY,count INTEGER,expires INTEGER);',
   );
   const adapter = {
+    beforeBatch: null,
     prepare(sql) {
       let args = [];
       return {
@@ -30,6 +31,11 @@ function app(root) {
       };
     },
     async batch(statements) {
+      if (this.beforeBatch) {
+        const callback = this.beforeBatch;
+        this.beforeBatch = null;
+        callback();
+      }
       db.exec('BEGIN');
       try {
         const result = [];
@@ -87,7 +93,7 @@ function app(root) {
     if (c && action === 'login') cookie = c.split(';')[0];
     return { status: r.status, data: await r.json() };
   }
-  return { db, tennis, post, get, board, stored, cookie: () => cookie };
+  return { db, adapter, tennis, post, get, board, stored, cookie: () => cookie };
 }
 
 const rtl = app(projectRoot),
@@ -316,9 +322,90 @@ async function main() {
   assert(archived.levels[0].matches[0].refereeEnabled);
   assert(!JSON.stringify(archived).includes('refereeSavedCode'));
   assert(!JSON.stringify(archived).includes('refereeCurrentCode'));
+
+  const concurrent = app(projectRoot);
+  await ok(concurrent.post('login', { code: 'sulek' }));
+  const concurrentAdmin = concurrent.cookie();
+  await ok(concurrent.post('season', { season: 'Lato 2026', finalsDates: dates }));
+  assert.equal(concurrent.db.prepare('SELECT COUNT(*) AS n FROM match_rows').get().n, 0);
+  const concurrentBoard = await ok(
+    concurrent.post('create', {
+      name: 'Top Pro',
+      startSize: 4,
+      format: 'super',
+      players: ['A', 'B', 'C', 'D'],
+      courts: ['1', '2', '3', '4'],
+      dates: [dates[0], dates[0], dates[1], dates[1]],
+      times: ['15:00', '15:00', '17:00', '17:00'],
+    }),
+  );
+  const [left, right] = concurrentBoard.levels[0].matches;
+  const staleBoardRevision = concurrentBoard.revision;
+  concurrent.adapter.beforeBatch = () =>
+    concurrent.db.prepare("UPDATE boards SET revision=revision+1 WHERE id='main'").run();
+  const simultaneous = await Promise.all([
+    concurrent.post(
+      'start',
+      { matchId: left.id, revision: staleBoardRevision, matchRevision: 0 },
+      concurrentAdmin,
+    ),
+    concurrent.post(
+      'start',
+      { matchId: right.id, revision: staleBoardRevision, matchRevision: 0 },
+      concurrentAdmin,
+    ),
+  ]);
+  assert.deepEqual(
+    simultaneous.map((response) => response.status),
+    [200, 200],
+  );
+  const concurrentResults = (await concurrent.get()).data.levels[0].matches;
+  assert.equal(concurrentResults[0].status, 'live');
+  assert.equal(concurrentResults[1].status, 'live');
+  assert.equal(concurrentResults[0].matchRevision, 1);
+  assert.equal(concurrentResults[1].matchRevision, 1);
+  const storedMatches = concurrent.db
+    .prepare("SELECT id,data,revision FROM match_rows WHERE board_id='main' AND id IN (?,?)")
+    .all(left.id, right.id);
+  assert.equal(storedMatches.length, 2);
+  assert(
+    storedMatches.every((row) => row.revision === 1 && JSON.parse(row.data).status === 'live'),
+  );
+  const sameMatch = await Promise.all([
+    concurrent.post('add', { matchId: left.id, player: 0, matchRevision: 1 }, concurrentAdmin),
+    concurrent.post('add', { matchId: left.id, player: 0, matchRevision: 1 }, concurrentAdmin),
+  ]);
+  assert.deepEqual(sameMatch.map((response) => response.status).sort(), [200, 409]);
+  assert.deepEqual(concurrent.board().levels[0].matches[0].sets, [[1, 0]]);
+  assert.equal(
+    (
+      await concurrent.post(
+        'add',
+        { matchId: left.id, player: 0, matchRevision: 0 },
+        concurrentAdmin,
+      )
+    ).status,
+    409,
+  );
+  await ok(
+    concurrent.post('add', { matchId: left.id, player: 0, matchRevision: 2 }, concurrentAdmin),
+  );
+  assert.deepEqual(concurrent.board().levels[0].matches[0].sets, [[2, 0]]);
+  assert.deepEqual(concurrent.board().levels[0].matches[1].sets, [[0, 0]]);
+  await ok(concurrent.post('rotate', { matchId: left.id }, concurrentAdmin));
+  assert.equal(
+    (
+      await concurrent.post(
+        'add',
+        { matchId: left.id, player: 0, matchRevision: 3 },
+        concurrentAdmin,
+      )
+    ).status,
+    409,
+  );
   console.error = oldLog;
   console.log(
-    'PASS: optional PIN, referee/admin/player authorization, deuce/advantage, game and set transitions, both tiebreaks, undo, match finish, rotation/session revocation, CAS, public privacy, archival isolation.',
+    'PASS: optional PIN, referee/admin/player authorization, deuce/advantage, game and set transitions, both tiebreaks, undo, match finish, rotation/session revocation, independent match writes, same-match CAS, public privacy, archival isolation.',
   );
 }
 main().catch((e) => {

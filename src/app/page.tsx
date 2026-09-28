@@ -420,6 +420,7 @@ export default function Home() {
     }
     await post(action, {
       matchId: match.id,
+      matchRevision: match.matchRevision ?? 0,
       player,
       ...(action === 'finish' ? { finishedTime, finishedDate } : {}),
     });

@@ -34,6 +34,7 @@ import {
   type Level,
 } from '@/lib/tennis';
 export const dynamic = 'force-dynamic';
+const scoreActions = new Set(['start', 'point', 'add', 'finish', 'undo']);
 const json = (data: unknown, status = 200, headers: Record<string, string> = {}) =>
   Response.json(data, { status, headers: { 'Cache-Control': 'no-store', ...headers } });
 async function hash(value: string) {
@@ -137,6 +138,113 @@ function publicData(b: Board, access: string | null = null) {
     })),
   };
 }
+const placeholderFields = new Set([
+  'id',
+  'stage',
+  'roundSize',
+  'sources',
+  'players',
+  'court',
+  'time',
+  'sets',
+  'status',
+  'winner',
+  'history',
+]);
+function isPlaceholderMatch(match: Match) {
+  return (
+    match.status === 'scheduled' &&
+    match.winner === null &&
+    match.players.length === 2 &&
+    match.players.every((player) => !player) &&
+    !match.court &&
+    !match.time &&
+    match.sets.length === 1 &&
+    match.sets[0].length === 2 &&
+    match.sets[0].every((score) => score === 0) &&
+    !match.history?.length &&
+    Object.keys(match).every((field) => placeholderFields.has(field))
+  );
+}
+async function published(b: Board, access: string | null, boardRevision: number) {
+  const db = database();
+  const matches = b.levels
+    .flatMap((level) => level.matches)
+    .filter((match) => !isPlaceholderMatch(match));
+  const existing = await db
+    .prepare(
+      "SELECT m.id,m.data,m.revision,b.revision AS boardRevision FROM boards b LEFT JOIN match_rows m ON m.board_id=b.id WHERE b.id='main'",
+    )
+    .all<{
+      id: string | null;
+      data: string | null;
+      revision: number | null;
+      boardRevision: number;
+    }>();
+  const currentBoardRevision = existing.results[0]?.boardRevision ?? boardRevision;
+  const current = new Map(existing.results.filter((row) => row.id).map((row) => [row.id, row]));
+  const changed =
+    currentBoardRevision === boardRevision
+      ? matches.filter((match) => current.get(match.id)?.data !== JSON.stringify(match))
+      : [];
+  const activeIds = new Set(matches.map((match) => match.id));
+  const stale =
+    currentBoardRevision === boardRevision &&
+    existing.results.some((row) => row.id !== null && !activeIds.has(row.id));
+  const statements = changed.map((match) =>
+    db
+      .prepare(
+        "INSERT INTO match_rows (board_id,id,data,revision) SELECT 'main',?,?,0 WHERE EXISTS (SELECT 1 FROM boards WHERE id='main' AND revision=?) ON CONFLICT(board_id,id) DO UPDATE SET data=excluded.data,revision=match_rows.revision+1 WHERE match_rows.data<>excluded.data",
+      )
+      .bind(match.id, JSON.stringify(match), boardRevision),
+  );
+  if (stale) {
+    const ids = [...activeIds];
+    statements.push(
+      db
+        .prepare(
+          `DELETE FROM match_rows WHERE board_id='main' ${ids.length ? `AND id NOT IN (${ids.map(() => '?').join(',')})` : ''} AND EXISTS (SELECT 1 FROM boards WHERE id='main' AND revision=?)`,
+        )
+        .bind(...ids, boardRevision),
+    );
+  }
+  if (statements.length) await db.batch(statements);
+  const rows = statements.length
+    ? await db
+        .prepare(
+          "SELECT m.id,m.data,m.revision,b.revision AS boardRevision FROM boards b LEFT JOIN match_rows m ON m.board_id=b.id WHERE b.id='main'",
+        )
+        .all<{
+          id: string | null;
+          data: string | null;
+          revision: number | null;
+          boardRevision: number;
+        }>()
+    : existing;
+  const consistent = (rows.results[0]?.boardRevision ?? boardRevision) === boardRevision;
+  const revisions = new Map(
+    rows.results.filter((row) => row.id).map((row) => [row.id, row.revision]),
+  );
+  const data = publicData(b, access);
+  return {
+    ...data,
+    levels: data.levels.map((level) => ({
+      ...level,
+      matches: level.matches.map((match) => ({
+        ...match,
+        matchRevision: consistent ? (revisions.get(match.id) ?? 0) : -1,
+      })),
+    })),
+  };
+}
+async function publishedAfterCommit(b: Board, access: string | null, boardRevision: number) {
+  try {
+    return await published(b, access, boardRevision);
+  } catch (error) {
+    console.error('match revision sync failed after save', error);
+    return publicData(b, access);
+  }
+}
 function validDate(value: unknown) {
   const s = String(value ?? '');
   if (!s) return '';
@@ -188,7 +296,7 @@ export async function GET(req: Request) {
     const { board, revision } = await read();
     const access = validAccess(board, await scope(req));
     return json({
-      ...publicData(board, access),
+      ...(await published(board, access, revision)),
       archives: await archives(),
       revision,
       scope: access,
@@ -200,6 +308,9 @@ export async function GET(req: Request) {
   }
 }
 export async function POST(req: Request) {
+  return handlePost(req, 0);
+}
+async function handlePost(req: Request, retry: number): Promise<Response> {
   try {
     if (req.headers.get('sec-fetch-site') === 'cross-site')
       return json({ error: 'Niedozwolone żądanie.' }, 403);
@@ -210,6 +321,7 @@ export async function POST(req: Request) {
       return json({ error: 'Tylko organizator może przywracać kopie zapasowe.' }, 403);
     const raw = await readBackupRequest(req, restoring ? BACKUP_MAX_BYTES : 12000);
     const body = JSON.parse(raw);
+    const independentScore = scoreActions.has(body.action) && Number.isInteger(body.matchRevision);
     const db = database();
     const { board, revision, exists } = await read();
     if (body.action === 'login') {
@@ -271,7 +383,7 @@ export async function POST(req: Request) {
         'Set-Cookie': 'tennis_session=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0',
       });
     }
-    if (body.revision !== revision)
+    if (!independentScore && body.revision !== revision)
       return json(
         {
           error:
@@ -336,7 +448,7 @@ export async function POST(req: Request) {
           409,
         );
       return json({
-        ...publicData(board, access),
+        ...(await publishedAfterCommit(board, access, revision + 1)),
         archives: await archives(),
         revision: revision + 1,
         scope: access,
@@ -409,7 +521,7 @@ export async function POST(req: Request) {
           409,
         );
       return json({
-        ...publicData(next, access),
+        ...(await publishedAfterCommit(next, access, revision + 1)),
         archives: await archives(),
         revision: revision + 1,
         scope: access,
@@ -429,7 +541,7 @@ export async function POST(req: Request) {
           409,
         );
       return json({
-        ...publicData(restored, access),
+        ...(await publishedAfterCommit(restored, access, revision + 1)),
         archives: await archives(),
         revision: revision + 1,
         scope: access,
@@ -499,13 +611,14 @@ export async function POST(req: Request) {
           409,
         );
       return json({
-        ...publicData(next, access),
+        ...(await publishedAfterCommit(next, access, revision + 1)),
         archives: await archives(),
         revision: revision + 1,
         scope: access,
       });
     }
     let codes: Record<string, string> | undefined;
+    let scoredMatch: Match | null = null;
     const usedCodes = new Set(
       board.levels.flatMap((l) =>
         l.matches.flatMap((m) => [m.codeHash, m.refereeCodeHash]).filter((h): h is string => !!h),
@@ -537,7 +650,12 @@ export async function POST(req: Request) {
             codes[m.id] = generated.code;
           }
       if (!Object.keys(codes).length)
-        return json({ ...publicData(board, access), revision, scope: access, codes });
+        return json({
+          ...(await published(board, access, revision)),
+          revision,
+          scope: access,
+          codes,
+        });
     } else if (body.action === 'theme') {
       return json(
         { error: 'Każda liga ma własny adres. Przejdź do wybranej ligi linkiem na dole strony.' },
@@ -750,6 +868,33 @@ export async function POST(req: Request) {
       if (!level || !match) return json({ error: 'Nie znaleziono meczu.' }, 404);
       if (access !== 'admin' && access !== match.id && access !== refereeScope(match))
         return json({ error: 'Ten kod nie pozwala edytować tego meczu.' }, 403);
+      if (independentScore) {
+        const row = await db
+          .prepare("SELECT data,revision FROM match_rows WHERE board_id='main' AND id=?")
+          .bind(match.id)
+          .first<{ data: string; revision: number }>();
+        if (row && row.data !== JSON.stringify(match)) {
+          await db
+            .prepare(
+              "UPDATE match_rows SET data=?,revision=revision+1 WHERE board_id='main' AND id=? AND revision=? AND EXISTS (SELECT 1 FROM boards WHERE id='main' AND revision=?)",
+            )
+            .bind(JSON.stringify(match), match.id, row.revision, revision)
+            .run();
+          return json(
+            { error: 'Mecz został zmieniony. Odświeżono dane — sprawdź wynik i ponów działanie.' },
+            409,
+          );
+        }
+        if ((row?.revision ?? 0) !== body.matchRevision)
+          return json(
+            {
+              error:
+                'Wynik tego meczu został zmieniony. Odświeżono dane — sprawdź wynik i ponów działanie.',
+            },
+            409,
+          );
+        scoredMatch = match;
+      }
       if (
         LEAGUE_FEATURES.bracketEditor &&
         ['start', 'add', 'point', 'finish', 'undo'].includes(body.action) &&
@@ -899,7 +1044,19 @@ export async function POST(req: Request) {
     normalizeLiveMatches(board);
     board.theme = SITE_LEAGUE;
     let saved;
-    if (exists)
+    if (independentScore && scoredMatch && exists) {
+      const result = await db.batch([
+        db
+          .prepare('UPDATE boards SET data=?,revision=revision+1 WHERE id=? AND revision=?')
+          .bind(JSON.stringify(board), 'main', revision),
+        db
+          .prepare(
+            "INSERT INTO match_rows (board_id,id,data,revision) SELECT 'main',?,?,1 WHERE changes()=1 ON CONFLICT(board_id,id) DO UPDATE SET data=excluded.data,revision=match_rows.revision+1",
+          )
+          .bind(scoredMatch.id, JSON.stringify(scoredMatch)),
+      ]);
+      saved = result[0];
+    } else if (exists)
       saved = await db
         .prepare('UPDATE boards SET data=?,revision=revision+1 WHERE id=? AND revision=?')
         .bind(JSON.stringify(board), 'main', revision)
@@ -909,11 +1066,21 @@ export async function POST(req: Request) {
         .prepare('INSERT OR IGNORE INTO boards (id,data,revision) VALUES (?,?,1)')
         .bind('main', JSON.stringify(board))
         .run();
+    if (!saved.meta.changes && independentScore && retry < 8)
+      return handlePost(
+        new Request(req.url, { method: 'POST', headers: req.headers, body: raw }),
+        retry + 1,
+      );
     if (!saved.meta.changes)
       return json({ error: 'Ktoś właśnie zmienił wynik. Sprawdź go i spróbuj ponownie.' }, 409);
     if (body.action === 'rotate')
       await db.prepare('DELETE FROM sessions WHERE scope=?').bind(body.matchId).run();
-    return json({ ...publicData(board, access), revision: revision + 1, codes, scope: access });
+    return json({
+      ...(await publishedAfterCommit(board, access, revision + 1)),
+      revision: revision + 1,
+      codes,
+      scope: access,
+    });
   } catch (e) {
     console.error('league write failed', e);
     return json(

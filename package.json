@@ -18,7 +18,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "db:generate": "drizzle-kit generate",
-    "db:local:init": "node scripts/init-local-db.mjs"
+    "db:local:init": "node scripts/init-local-db.mjs",
+    "db:production:migrate": "node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --remote --config wrangler.production.jsonc --file drizzle/0001_yellow_talkback.sql --yes"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

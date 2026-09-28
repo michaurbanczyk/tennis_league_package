@@ -16,6 +16,7 @@ export type Score = {
 export type MatchSource = { matchId: string; outcome: 'winner' | 'loser' };
 export type Match = Score & {
   id: string;
+  matchRevision?: number;
   stage: string;
   format?: 'super' | 'classic';
   roundSize?: number;

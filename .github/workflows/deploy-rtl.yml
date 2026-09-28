@@ -56,6 +56,12 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Add match rows to D1
+        env:
+          CLOUDFLARE_ACCOUNT_ID: c4fb946ea49e60688d5b2efca9b495cf
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: pnpm db:production:migrate
+
       - name: Deploy Worker
         env:
           CLOUDFLARE_ACCOUNT_ID: c4fb946ea49e60688d5b2efca9b495cf

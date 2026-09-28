@@ -2,6 +2,8 @@
 
 Standalone Next.js application for the Relaksmisja tennis finals. The frontend and API run through Vinext on Cloudflare Workers. Match and season data are stored in D1; banners and PDF announcements use R2.
 
+Active matches also have records in `match_rows`. Each record has its own revision. Score requests send the selected match's revision, so edits to different matches can proceed concurrently; an outdated edit to the same match receives HTTP 409. The `boards` JSON remains the tournament snapshot used by brackets, archives, and backups. The page still polls for updates every three seconds; WebSockets are a separate change.
+
 ## Project structure
 
 ```text
@@ -47,7 +49,7 @@ The build produces a Cloudflare Worker in `dist/server` and client assets in `di
 
 ## Deploy to Cloudflare
 
-`wrangler.production.jsonc` targets the existing `rtl` Worker, its D1 database (`DB`), and R2 bucket (`BUCKET`). The Worker must have the `ADMIN_CODE` secret. The existing database must contain the schema from `drizzle/0000_equal_photon.sql`. Do not apply the initial schema to a populated database.
+`wrangler.production.jsonc` targets the existing `rtl` Worker, its D1 database (`DB`), and R2 bucket (`BUCKET`). The Worker must have the `ADMIN_CODE` secret. The existing database must contain the schema from `drizzle/0000_equal_photon.sql`. Do not apply the initial schema to a populated database. Apply the idempotent `drizzle/0001_yellow_talkback.sql` migration before deploying this version; the GitHub workflow does this automatically.
 
 After verifying the Cloudflare account, resource IDs, and secret:
 
@@ -58,6 +60,7 @@ pnpm lint
 pnpm format:check
 pnpm test
 pnpm build
+pnpm db:production:migrate
 pnpm deploy
 ```
 

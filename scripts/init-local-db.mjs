@@ -26,16 +26,23 @@ function execute(args) {
 
 const output = execute([
   '--command',
-  "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('attempts','boards','sessions')",
+  "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('attempts','boards','sessions','match_rows')",
   '--json',
 ]);
 const tables = new Set(JSON.parse(output)[0].results.map((row) => row.name));
 
-if (tables.size === 3) {
-  console.log('Local D1 tables already exist.');
-} else if (tables.size > 0) {
+const baseTables = ['attempts', 'boards', 'sessions'];
+const existingBase = baseTables.filter((name) => tables.has(name));
+if (existingBase.length > 0 && existingBase.length < baseTables.length) {
   throw new Error(`Local D1 schema is incomplete: found ${[...tables].join(', ')}.`);
-} else {
+}
+if (existingBase.length === 0) {
   execute(['--file', 'drizzle/0000_equal_photon.sql', '--yes']);
   console.log('Created local D1 tables: attempts, boards, sessions.');
+}
+if (!tables.has('match_rows')) {
+  execute(['--file', 'drizzle/0001_yellow_talkback.sql', '--yes']);
+  console.log('Created local D1 table: match_rows.');
+} else {
+  console.log('Local D1 match_rows table already exists.');
 }

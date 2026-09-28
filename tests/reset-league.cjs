@@ -7,7 +7,7 @@ const ts = createRequire(projectRoot + '/package.json')('typescript');
 function app(root) {
   const db = new DatabaseSync(':memory:');
   db.exec(
-    'CREATE TABLE boards(id TEXT PRIMARY KEY,data TEXT NOT NULL,revision INTEGER NOT NULL); CREATE TABLE sessions(token TEXT PRIMARY KEY,scope TEXT,expires INTEGER); CREATE TABLE attempts(key TEXT PRIMARY KEY,count INTEGER,expires INTEGER);',
+    'CREATE TABLE boards(id TEXT PRIMARY KEY,data TEXT NOT NULL,revision INTEGER NOT NULL); CREATE TABLE match_rows(board_id TEXT NOT NULL,id TEXT NOT NULL,data TEXT NOT NULL,revision INTEGER NOT NULL,PRIMARY KEY(board_id,id)); CREATE TABLE sessions(token TEXT PRIMARY KEY,scope TEXT,expires INTEGER); CREATE TABLE attempts(key TEXT PRIMARY KEY,count INTEGER,expires INTEGER);',
   );
   const adapter = {
     prepare(sql) {
@@ -192,6 +192,7 @@ async function main() {
   assert.equal(reset.season, null);
   assert.deepEqual(reset.finalsDates, []);
   assert.equal(reset.levels.length, isRtl ? 15 : 6);
+  assert.equal(a.db.prepare('SELECT COUNT(*) AS n FROM match_rows').get().n, 0);
   for (const level of a.board().levels)
     for (const m of level.matches) {
       assert(m.players.every((p) => p === ''));
