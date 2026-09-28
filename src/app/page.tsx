@@ -61,6 +61,7 @@ import {
   demo,
   matchWinner,
   setWinner,
+  LIVE_LIMIT_MS,
   type Board,
   type Match,
 } from '@/lib/tennis';
@@ -151,15 +152,61 @@ export default function Home() {
     }
   }, [apply]);
   useEffect(() => {
-    refresh();
-    const timer = setInterval(refresh, 3000);
-    const focus = () => refresh();
+    void refresh();
+    let stopped = false;
+    let socket: WebSocket | null = null;
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
+    let retries = 0;
+    const connect = () => {
+      if (stopped) return;
+      const url = new URL('/api/league/live', window.location.href);
+      url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+      socket = new WebSocket(url);
+      socket.onopen = () => {
+        retries = 0;
+        // Catch any D1 writes committed before the socket was accepted.
+        void refresh();
+      };
+      socket.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data) as { type?: string; revision?: number };
+          if (message.type === 'changed' && Number(message.revision) > ref.current.revision)
+            void refresh();
+        } catch {
+          // Ignore malformed realtime messages.
+        }
+      };
+      socket.onclose = () => {
+        socket = null;
+        if (stopped) return;
+        setOnline(false);
+        retryTimer = setTimeout(connect, Math.min(1000 * 2 ** retries++, 30000));
+      };
+      socket.onerror = () => socket?.close();
+    };
+    connect();
+    const focus = () => void refresh();
     window.addEventListener('online', focus);
+    window.addEventListener('focus', focus);
     return () => {
-      clearInterval(timer);
+      stopped = true;
+      clearTimeout(retryTimer);
+      socket?.close();
       window.removeEventListener('online', focus);
+      window.removeEventListener('focus', focus);
     };
   }, [refresh]);
+  useEffect(() => {
+    const nextExpiry = data.levels
+      .flatMap((level) => level.matches)
+      .filter((match) => match.status === 'live' && match.startedAt)
+      .map((match) => Date.parse(match.startedAt!) + LIVE_LIMIT_MS)
+      .filter(Number.isFinite)
+      .sort((a, b) => a - b)[0];
+    if (nextExpiry === undefined) return;
+    const timer = setTimeout(() => void refresh(), Math.max(0, nextExpiry - Date.now() + 1000));
+    return () => clearTimeout(timer);
+  }, [data.levels, refresh]);
   useEffect(() => {
     const context = (document as any).modelContext;
     if (!context?.registerTool) return;

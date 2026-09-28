@@ -26,16 +26,12 @@ function useBanner(kind: BannerKind) {
       }
     }
     void refresh();
-    const timer = setInterval(() => void refresh(), 30000);
     const listener = () => void refresh();
     window.addEventListener('league-banner-updated', listener);
-    window.addEventListener('focus', listener);
     return () => {
       active = false;
       controller.abort();
-      clearInterval(timer);
       window.removeEventListener('league-banner-updated', listener);
-      window.removeEventListener('focus', listener);
     };
   }, [kind]);
   return { meta, error };

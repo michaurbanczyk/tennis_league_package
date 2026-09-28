@@ -8,7 +8,7 @@
   "scripts": {
     "install:ci": "bash scripts/install-pnpm.sh",
     "dev": "node scripts/run-framework.mjs dev",
-    "build": "node scripts/run-framework.mjs build",
+    "build": "node scripts/build-with-realtime.mjs",
     "check": "tsc --noEmit --incremental false",
     "test": "node scripts/test-all.mjs",
     "prepare": "husky",

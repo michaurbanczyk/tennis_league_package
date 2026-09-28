@@ -3,7 +3,7 @@
   "name": "rtl",
   "account_id": "c4fb946ea49e60688d5b2efca9b495cf",
   "keep_vars": false,
-  "main": "dist/server/index.js",
+  "main": "dist/server/worker-entry.mjs",
   "compatibility_date": "2026-05-15",
   "compatibility_flags": ["nodejs_compat"],
   "no_bundle": true,
@@ -23,6 +23,10 @@
       "database_id": "6311be03-b905-4f8e-9e9e-88a8ce36bbd6",
     },
   ],
+  "durable_objects": {
+    "bindings": [{ "name": "LEAGUE_UPDATES", "class_name": "LeagueUpdates" }],
+  },
+  "migrations": [{ "tag": "league-updates-v1", "new_sqlite_classes": ["LeagueUpdates"] }],
   "r2_buckets": [
     {
       "binding": "BUCKET",

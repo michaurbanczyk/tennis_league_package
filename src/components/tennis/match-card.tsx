@@ -44,7 +44,7 @@ const labels = {
   finished: 'Zakończony',
   unfinished: 'Mecz rozpoczęty, ale niedokończony',
 };
-// Keep the component type stable: polling must update scores without remounting
+// Keep the component type stable: live updates must update scores without remounting
 // the card and restarting its live animation or losing keyboard focus.
 export function MatchCard({
   m,

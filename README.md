@@ -45,11 +45,13 @@ pnpm build
 
 ESLint checks the source tree and skips generated build output. Prettier formats staged source and configuration files through the Husky pre-commit hook after `pnpm install`. Run `pnpm format` to format the repository's supported files; `pnpm format:check` checks them all. Some existing application lint findings are warnings until their underlying code is updated.
 
-The build produces a Cloudflare Worker in `dist/server` and client assets in `dist/client`.
+The build produces a Cloudflare Worker in `dist/server` and client assets in `dist/client`. It also adds the WebSocket entry and Durable Object module to the Worker bundle.
 
 ## Deploy to Cloudflare
 
 `wrangler.production.jsonc` targets the existing `rtl` Worker, its D1 database (`DB`), and R2 bucket (`BUCKET`). The Worker must have the `ADMIN_CODE` secret. The existing database must contain the schema from `drizzle/0000_equal_photon.sql`. Do not apply the initial schema to a populated database. Apply the idempotent `drizzle/0001_yellow_talkback.sql` migration before deploying this version; the GitHub workflow does this automatically.
+
+Live league change notifications are sent through a hibernating Durable Object WebSocket at `/api/league/live`. D1 remains the source of truth; connected browsers fetch the current league after a notification. The first deployment creates the `LeagueUpdates` Durable Object namespace through the migration in `wrangler.production.jsonc`. No extra D1 migration is needed for WebSockets.
 
 After verifying the Cloudflare account, resource IDs, and secret:
 

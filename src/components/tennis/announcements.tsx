@@ -33,11 +33,9 @@ export function Announcements({ admin }: { admin: boolean }) {
     }
 
     void load();
-    const timer = setInterval(() => void load(), 30000);
     return () => {
       active = false;
       controller.abort();
-      clearInterval(timer);
     };
   }, []);
 

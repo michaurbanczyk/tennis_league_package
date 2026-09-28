@@ -197,7 +197,7 @@ export function normalizeLiveMatches(board: Board, now = Date.now()): boolean {
       let start = Date.parse(m.startedAt || '');
       if (!Number.isFinite(start)) {
         // Legacy boards did not store a start time. The last persisted activity is
-        // the latest possible start; pin this fallback once, never on each poll.
+        // the latest possible start; pin this fallback once, never on each read.
         start = Date.parse(m.updated || '');
         m.startedAt = Number.isFinite(start) ? new Date(start).toISOString() : null;
         changed = true;

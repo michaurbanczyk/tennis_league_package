@@ -8,6 +8,7 @@ import { SITE_LEAGUE, LEAGUE_FEATURES } from '@/lib/site-league';
 import { seasonKey, numberedSeason } from '@/lib/league-theme';
 import { normalizeYoutubeUrl } from '@/lib/youtube';
 import { database, adminCode } from '@/db/raw';
+import { publishLeagueChange } from '@/lib/league-updates';
 import {
   matchFormat,
   hasMatchSchedule,
@@ -36,7 +37,16 @@ import {
 export const dynamic = 'force-dynamic';
 const scoreActions = new Set(['start', 'point', 'add', 'finish', 'undo']);
 const json = (data: unknown, status = 200, headers: Record<string, string> = {}) =>
-  Response.json(data, { status, headers: { 'Cache-Control': 'no-store', ...headers } });
+  Response.json(data, {
+    status,
+    headers: {
+      'Cache-Control': 'no-store',
+      ...(status < 300 && data && typeof data === 'object' && 'revision' in data
+        ? { 'X-League-Revision': String(data.revision) }
+        : {}),
+      ...headers,
+    },
+  });
 async function hash(value: string) {
   return Array.from(
     new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value))),
@@ -74,7 +84,10 @@ async function read() {
       .prepare('UPDATE boards SET data=?,revision=revision+1 WHERE id=? AND revision=?')
       .bind(JSON.stringify(board), 'main', revision)
       .run();
-    if (saved.meta.changes) return { board, revision: revision + 1, exists: true };
+    if (saved.meta.changes) {
+      await publishLeagueChange(revision + 1);
+      return { board, revision: revision + 1, exists: true };
+    }
   }
   throw Error('Dane zmieniają się w tej chwili. Spróbuj ponownie.');
 }
@@ -308,7 +321,13 @@ export async function GET(req: Request) {
   }
 }
 export async function POST(req: Request) {
-  return handlePost(req, 0);
+  const response = await handlePost(req, 0);
+  const revisionHeader = response.headers.get('X-League-Revision');
+  if (response.ok && revisionHeader !== null) {
+    const revision = Number(revisionHeader);
+    if (Number.isSafeInteger(revision)) await publishLeagueChange(revision);
+  }
+  return response;
 }
 async function handlePost(req: Request, retry: number): Promise<Response> {
   try {
