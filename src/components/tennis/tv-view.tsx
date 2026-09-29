@@ -19,7 +19,7 @@ import {
 import { YoutubeLink } from './youtube-link';
 import { LiveBall } from './live-ball';
 import { leagueBrand } from '@/lib/league-theme';
-import { LeagueHeader } from './banner-settings';
+import { LeagueBrand } from './league-brand';
 function playerName(m: Match, index: number, l: Level) {
   return seededPlayerName(m, index) || playerPlaceholder(l, m, index);
 }
@@ -179,7 +179,11 @@ export function TvView({
       <header className="tv-header">
         <div className="tv-brand">
           <div className="tv-brand-logos">
-            {isRtl ? <LeagueHeader /> : <img src={brand.logo} alt={brand.name} />}
+            {isRtl ? (
+              <LeagueBrand theme="relaksmisja" />
+            ) : (
+              <img src={brand.logo} alt={brand.name} />
+            )}
           </div>
           <div>
             <h1>{isRtl ? 'Wyniki na żywo' : brand.title}</h1>

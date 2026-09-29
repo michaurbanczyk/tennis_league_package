@@ -9,6 +9,7 @@ import { BackupPanel } from '@/components/tennis/backup-panel';
 import { MatchSearch } from '@/components/tennis/match-search';
 import { SeasonFields, readSeasonFields } from '@/components/tennis/season-fields';
 import { leagueBrand, numberedSeason } from '@/lib/league-theme';
+import { LeagueBrand } from '@/components/tennis/league-brand';
 import { SITE_LEAGUE } from '@/lib/site-league';
 import { BracketSetup } from '@/components/tennis/bracket-setup';
 import { RefereeSettings } from '@/components/tennis/referee';
@@ -41,7 +42,6 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Toaster, toast } from 'sonner';
-import { BannerSettings, LeagueHeader } from '@/components/tennis/banner-settings';
 import { Sponsors } from '@/components/tennis/sponsors';
 import { localMatchDate } from '@/lib/match-timing';
 import { FinalsSummary } from '@/components/tennis/finals-summary';
@@ -585,11 +585,13 @@ export default function Home() {
                 )}
             </div>
           </div>
-          <div className="header-inner">
-            <a className="brand" href="/" aria-label={brand.name + ' — strona główna'}>
-              <LeagueHeader />
-            </a>
-          </div>
+          {!isRtl && (
+            <div className="header-inner">
+              <a className="brand" href="/" aria-label={brand.name + ' — strona główna'}>
+                <LeagueBrand theme={theme} />
+              </a>
+            </div>
+          )}
         </div>
         <MatchSearch
           key={selectedArchive || data.season || 'current'}
@@ -1007,7 +1009,6 @@ export default function Home() {
           </div>
         </footer>
         <Sponsors />
-        {isOrganizer && <BannerSettings />}
       </main>
       <Dialog
         open={modal !== null}
