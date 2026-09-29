@@ -585,13 +585,11 @@ export default function Home() {
                 )}
             </div>
           </div>
-          {!isRtl && (
-            <div className="header-inner">
-              <a className="brand" href="/" aria-label={brand.name + ' — strona główna'}>
-                <LeagueBrand theme={theme} />
-              </a>
-            </div>
-          )}
+          <div className="header-inner">
+            <a className="brand" href="/" aria-label={brand.name + ' — strona główna'}>
+              <LeagueBrand theme={theme} />
+            </a>
+          </div>
         </div>
         <MatchSearch
           key={selectedArchive || data.season || 'current'}
