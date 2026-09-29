@@ -1,5 +1,6 @@
 import { ChevronRight, Copy, Plus, Trophy } from 'lucide-react';
 import { HorizontalBracket } from '@/components/tennis/horizontal-bracket';
+import { BracketPdfButton } from '@/components/tennis/bracket-pdf-button';
 import { MatchCard, type MatchCardProps } from '@/components/tennis/match-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -22,9 +23,11 @@ type BaseProps = {
 
 export function ResultsView({
   view,
+  board,
   displayLoading,
   cardProps,
   isDemo,
+  archiveId,
   resultMatchCount,
   copy,
   activeLevelFilter,
@@ -34,6 +37,7 @@ export function ResultsView({
   open,
 }: BaseProps & {
   isDemo: boolean;
+  archiveId?: string;
   resultMatchCount: number;
   copy: (value: string) => void;
   activeLevelFilter: string;
@@ -86,6 +90,14 @@ export function ResultsView({
                         <Trophy size={17} />
                       </span>
                       <h3>{l.name}</h3>
+                      {board.theme === 'relaksmisja' && (
+                        <BracketPdfButton
+                          level={l}
+                          board={board}
+                          archiveId={archiveId}
+                          isDemo={isDemo}
+                        />
+                      )}
                       <span>
                         {l.matches[0].players.some(Boolean)
                           ? `${l.startSize || 4} ${isDoubles(l) ? 'par' : 'zawodników'} · ${l.matches.length} ${l.matches.length === 4 ? 'mecze' : 'meczów'}`

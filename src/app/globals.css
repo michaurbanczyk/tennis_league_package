@@ -496,6 +496,40 @@ h1 > span {
   font-weight: 600;
   letter-spacing: 0.2px;
 }
+.bracket-pdf-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 7px;
+  border: 1px solid #d9e0e9;
+  border-radius: 5px;
+  background: transparent;
+  color: #53647c;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.bracket-pdf-button:hover {
+  background: #f4f6f9;
+  color: #1f3056;
+}
+.bracket-pdf-button:focus-visible {
+  outline: 2px solid #1f3056;
+  outline-offset: 2px;
+}
+.bracket-pdf-button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+@media (max-width: 700px) {
+  .bracket-pdf-button {
+    min-height: 32px;
+    padding: 6px 9px;
+    font-size: 11px;
+  }
+}
 .level-title > div > span:last-child {
   font-size: 12px;
   color: #829083;

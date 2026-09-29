@@ -7,6 +7,7 @@ const tests = [
   'tests/level-management.cjs',
   'tests/live-expiry.cjs',
   'tests/horizontal-bracket.cjs',
+  'tests/bracket-pdf.cjs',
   'tests/live-courts.mjs',
 ];
 

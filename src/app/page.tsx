@@ -937,6 +937,7 @@ export default function Home() {
           displayLoading={displayLoading}
           cardProps={cardProps}
           isDemo={isDemo}
+          archiveId={selectedArchive}
           resultMatchCount={resultMatchCount}
           copy={copy}
           activeLevelFilter={activeLevelFilter}
