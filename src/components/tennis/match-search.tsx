@@ -108,7 +108,6 @@ export function MatchSearch({
                 input.current?.focus();
               }}
             >
-              <div></div>
               <X size={18} />
             </button>
           )}
