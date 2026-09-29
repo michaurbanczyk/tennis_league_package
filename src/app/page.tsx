@@ -619,7 +619,7 @@ export default function Home() {
           <div className="finals-photo-inner">
             <h1 id="finals-photo-title">
               <span className="finals-photo-kicker">Finały</span>
-              <span className="finals-photo-name">Relaksmisja Tennis League</span>
+              <span className="finals-photo-name">Tennis League</span>
               {board.season && <span className="finals-photo-season">{board.season}</span>}
             </h1>
           </div>

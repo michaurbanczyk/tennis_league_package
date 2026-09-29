@@ -283,7 +283,7 @@ function drawHeader(
   drawText(
     page,
     font,
-    'Relaksmisja Tennis League',
+    'Tennis League',
     textX,
     height - (large ? 35 : 30),
     large ? 16 : 12,
@@ -557,7 +557,7 @@ export async function createBracketPdf({
     else drawRoundPage(page, font, board, displayLevel, plan);
   }
   document.setTitle(`Drabinka finałowa - ${level.name} - ${board.season || 'sezon'}`);
-  document.setSubject('Relaksmisja Tennis League');
+  document.setSubject('Tennis League');
   document.setCreator('RTL Finals');
   return document.save();
 }

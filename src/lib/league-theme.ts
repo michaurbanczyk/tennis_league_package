@@ -2,8 +2,8 @@ export type LeagueTheme = 'smart' | 'relaksmisja';
 export function leagueBrand(theme?: LeagueTheme) {
   return theme === 'relaksmisja'
     ? {
-        name: 'Relaksmisja Tennis League',
-        title: 'Finały Relaksmisja Tennis League',
+        name: 'Tennis League',
+        title: 'Finały Tennis League',
         logo: '/relaksmisja-logo.jpeg',
       }
     : { name: 'Smart Liga', title: 'Finały Smart Ligi', logo: '/smart-liga-logo.png' };
