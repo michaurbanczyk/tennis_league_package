@@ -545,6 +545,7 @@ export default function Home() {
         today={today}
         online={online}
         lastSync={lastSync}
+        serverTime={data.serverTime}
         isDemo={isDemo}
         onExit={exitTv}
       />

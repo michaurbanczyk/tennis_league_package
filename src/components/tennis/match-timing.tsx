@@ -8,7 +8,15 @@ import {
   localMatchTime,
   matchElapsed,
 } from '@/lib/match-timing';
-export function MatchTiming({ match: m, serverTime }: { match: Match; serverTime?: string }) {
+export function MatchTiming({
+  match: m,
+  serverTime,
+  tv = false,
+}: {
+  match: Match;
+  serverTime?: string;
+  tv?: boolean;
+}) {
   const anchor = useRef({ server: Date.now(), received: Date.now() }),
     [now, setNow] = useState(Date.now());
   useEffect(() => {
@@ -27,6 +35,30 @@ export function MatchTiming({ match: m, serverTime }: { match: Match; serverTime
   const start = actualStart(m),
     elapsed = matchElapsed(m, now),
     end = m.finishedAt ? Date.parse(m.finishedAt) : null;
+  if (tv)
+    return (
+      <div className="tv-time-card" aria-label="Czas meczu">
+        <div className="tv-time-details">
+          {m.time && (
+            <div>
+              <span>Plan</span>
+              <strong>{m.time}</strong>
+            </div>
+          )}
+          <div>
+            <span>Start</span>
+            <strong>{start === null ? '—' : localMatchTime(start)}</strong>
+          </div>
+          {start !== null && m.date && localMatchDate(start) !== m.date && (
+            <small>Rozpoczęto {localMatchDate(start)}</small>
+          )}
+        </div>
+        <div className="tv-time-duration">
+          <span>Trwa</span>
+          <strong>{elapsed === null ? '—' : `${Math.floor(elapsed / 60000)} min`}</strong>
+        </div>
+      </div>
+    );
   return (
     <div className="match-timing" aria-label="Czas meczu">
       <div>

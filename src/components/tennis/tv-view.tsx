@@ -3,7 +3,7 @@ import { tvCourts } from '@/lib/tv-courts';
 import { matchFormat } from '@/lib/tennis';
 import { courtGroups, courtEntries } from '@/lib/court-config';
 import { useEffect, useState, type CSSProperties } from 'react';
-import { ArrowLeft, RefreshCw, WifiOff } from 'lucide-react';
+import { ArrowLeft, WifiOff } from 'lucide-react';
 import {
   seededPlayerName,
   pointLabels,
@@ -20,6 +20,7 @@ import { YoutubeLink } from './youtube-link';
 import { LiveBall } from './live-ball';
 import { leagueBrand } from '@/lib/league-theme';
 import { LeagueBrand } from './league-brand';
+import { MatchTiming } from './match-timing';
 function playerName(m: Match, index: number, l: Level) {
   return seededPlayerName(m, index) || playerPlaceholder(l, m, index);
 }
@@ -35,13 +36,16 @@ function TvPrevious({ m, l }: { m: Match; l: Level }) {
             key={index}
           >
             <span className="tv-previous-name">
-              {playerName(m, index, l)}
-              {m.winner === index && <span aria-label="Zwycięzca"> ✓</span>}
+              <span>
+                {playerName(m, index, l)}
+                {m.winner === index && <span aria-label="Zwycięzca"> ✓</span>}
+              </span>
             </span>
             <span className="tv-previous-sets" aria-label={`Wynik: ${playerName(m, index, l)}`}>
               {[0, 1, 2].map((set) => (
                 <span
                   key={set}
+                  className={!m.sets[set] ? 'tv-previous-unplayed' : undefined}
                   aria-label={`${set === 2 && matchFormat(l, m) === 'super' ? 'Super tie-break' : `Set ${set + 1}`}: ${m.sets[set]?.[index] ?? 'nie grano'}`}
                 >
                   {m.sets[set]?.[index] ?? '–'}
@@ -63,7 +67,7 @@ function TvPrevious({ m, l }: { m: Match; l: Level }) {
     </article>
   );
 }
-function TvMatch({ m, l }: { m: Match; l: Level }) {
+function TvMatch({ m, l, serverTime }: { m: Match; l: Level; serverTime?: string }) {
   const showPoints = !!m.refereeEnabled && matchWinner(m.sets, matchFormat(l, m)) === null;
   return (
     <article className="tv-current-match" aria-label={`${l.name}, ${m.stage}`}>
@@ -73,11 +77,7 @@ function TvMatch({ m, l }: { m: Match; l: Level }) {
         </div>
         <YoutubeLink url={m.youtubeUrl} />
       </div>
-      {m.time && (
-        <p className="tv-planned-start">
-          Planowany start: <strong>{m.time}</strong>
-        </p>
-      )}
+      <MatchTiming match={m} serverTime={serverTime} tv />
       <div className="tv-match-description">
         <p className="tv-level-name">{l.name}</p>
         <h3 className={m.stage === 'Finał' ? 'tv-final-title' : ''}>{m.stage}</h3>
@@ -119,6 +119,7 @@ export function TvView({
   today,
   online,
   lastSync,
+  serverTime,
   isDemo,
   onExit,
 }: {
@@ -126,6 +127,7 @@ export function TvView({
   today: string;
   online: boolean;
   lastSync: Date | null;
+  serverTime?: string;
   isDemo: boolean;
   onExit: () => void;
 }) {
@@ -237,22 +239,32 @@ export function TvView({
               {court.previous && <TvPrevious m={court.previous.m} l={court.previous.l} />}
               <div className="tv-current">
                 {court.live.length ? (
-                  court.live.map(({ m, l }) => <TvMatch key={m.id} m={m} l={l} />)
+                  court.live.map(({ m, l }) => (
+                    <TvMatch key={m.id} m={m} l={l} serverTime={serverTime} />
+                  ))
                 ) : (
                   <div className="tv-idle-content">
-                    <p>Brak meczu na żywo</p>
                     {upcoming ? (
-                      <>
-                        <strong>{upcoming.m.time || '—'}</strong>
-                        <p>
-                          Najbliższy zaplanowany mecz
+                      <article
+                        className="tv-upcoming-card"
+                        aria-label={`Najbliższy mecz: ${upcoming.l.name}, ${upcoming.m.stage}`}
+                      >
+                        <div className="tv-upcoming-heading">
+                          <span>Najbliższy mecz</span>
+                          <span>Oczekujący</span>
                           <YoutubeLink url={upcoming.m.youtubeUrl} />
-                        </p>
+                        </div>
+                        <div className="tv-upcoming-start">
+                          <span>Planowany start</span>
+                          <strong>{upcoming.m.time || '—'}</strong>
+                        </div>
                         {upcoming.m.date !== today && (
                           <p className="tv-next-date">{dateLabel(upcoming.m.date)}</p>
                         )}
-                        <p className="tv-level-name">{upcoming.l.name}</p>
-                        <p className="tv-idle-stage">{upcoming.m.stage}</p>
+                        <div className="tv-match-description tv-upcoming-description">
+                          <p className="tv-level-name">{upcoming.l.name}</p>
+                          <h3>{upcoming.m.stage}</h3>
+                        </div>
                         <div className="tv-upcoming-players">
                           {[0, 1].map((index) => (
                             <p className="tv-player-name" key={index}>
@@ -260,8 +272,10 @@ export function TvView({
                             </p>
                           ))}
                         </div>
-                      </>
-                    ) : null}
+                      </article>
+                    ) : (
+                      <p>Brak meczu na żywo</p>
+                    )}
                   </div>
                 )}
               </div>
@@ -294,18 +308,20 @@ export function TvView({
         })}
       </div>
       <footer className="tv-footer">
-        <span className={online ? 'tv-connected' : 'tv-disconnected'} role="status">
-          {online ? <RefreshCw size={16} /> : <WifiOff size={16} />}
-          <span>
-            {online
-              ? 'Automatyczne odświeżanie co 3 sekundy'
-              : 'Brak połączenia — wyniki mogą być nieaktualne'}
-            {!online && lastSync
-              ? ` · Ostatni odbiór: ${lastSync.toLocaleTimeString('pl-PL', { timeZone: 'Europe/Warsaw' })}`
-              : ''}
+        {!online && (
+          <span className="tv-disconnected" role="status">
+            <WifiOff size={16} />
+            <span>
+              Brak połączenia — wyniki mogą być nieaktualne
+              {lastSync
+                ? ` · Ostatni odbiór: ${lastSync.toLocaleTimeString('pl-PL', { timeZone: 'Europe/Warsaw' })}`
+                : ''}
+            </span>
           </span>
+        )}
+        <span className="tv-footer-note">
+          Kolejne mecze: tylko z tego samego dnia · godziny według planu
         </span>
-        <span>Kolejne mecze: tylko z tego samego dnia · godziny według planu</span>
       </footer>
     </main>
   );

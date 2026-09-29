@@ -3434,8 +3434,31 @@ footer {
   min-height: 26px;
 }
 .tv-match-description {
-  min-height: calc(var(--tv-text) * 4.4);
+  display: flex;
+  align-items: center;
+  align-content: flex-start;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  min-height: 0;
+  margin: 2px 0 3px;
   flex: none;
+}
+.tv-match-description .tv-level-name {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  padding: 2px 7px;
+  border: 1px solid #d9e8c9;
+  border-radius: 999px;
+  background: #edf6e2;
+  color: #41671e;
+  font-size: clamp(11px, min(1vw, 1.7dvh), 18px);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.15;
+  max-width: 100%;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
 }
 .tv-level-name {
   font-size: var(--tv-text);
@@ -3446,10 +3469,12 @@ footer {
 }
 .tv-match-description h3 {
   font-size: var(--tv-text);
-  font-weight: 400;
-  color: #be7d20;
-  margin: 0 0 10px;
-  line-height: 1.3;
+  font-weight: 700;
+  color: #374b25;
+  margin: 0;
+  min-width: 0;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 .tv-match-description h3.tv-final-title {
   color: #41671e;
@@ -3458,7 +3483,8 @@ footer {
 .tv-players {
   flex: 1;
   display: grid;
-  grid-template-rows: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, auto);
+  align-content: start;
   min-height: 0;
 }
 .tv-player {
@@ -3570,23 +3596,57 @@ footer {
   line-height: 1.4;
   margin: 0 0 auto;
 }
-.tv-idle-content > strong {
-  font-size: var(--tv-score);
+.tv-upcoming-card {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #dce8d3;
+  border-left: 4px solid #8fc34a;
+  border-radius: 6px;
+  background: #f7f9f5;
+}
+.tv-upcoming-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  color: #526d38;
+  font-size: var(--tv-text);
+  font-weight: 700;
   line-height: 1.2;
-  color: #536544;
-  font-weight: 400;
-  margin-top: 16px;
 }
-.tv-idle-content > strong + p {
-  color: #707767;
-  font-size: var(--tv-text);
-  line-height: 1.4;
-  margin: 5px 0 16px;
+.tv-upcoming-heading > span:nth-child(2) {
+  margin-left: auto;
+  padding: 2px 5px;
+  border-radius: 3px;
+  background: #e7f1dd;
+  font-size: 0.75em;
+  font-weight: 600;
 }
-.tv-idle-stage {
+.tv-upcoming-start {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 3px 8px;
+  padding: 7px 8px;
+  border-radius: 4px;
+  background: #fff;
+  font-variant-numeric: tabular-nums;
+}
+.tv-upcoming-start > span {
+  color: #59644e;
   font-size: var(--tv-text);
-  color: #be7d20;
-  margin: 0 0 auto;
+}
+.tv-upcoming-start > strong {
+  color: #41671e;
+  font-size: clamp(24px, 2vw, 38px);
+  line-height: 1;
+}
+.tv-upcoming-description {
+  margin: 0;
 }
 .tv-idle-note {
   font-size: var(--tv-text);
@@ -3608,17 +3668,15 @@ footer {
   color: #777;
   flex: none;
 }
-.tv-footer > span:first-child {
+.tv-disconnected {
   display: flex;
   align-items: center;
   gap: 7px;
-}
-.tv-connected {
-  color: #648638;
-}
-.tv-disconnected {
   color: #a23e28;
   font-weight: 600;
+}
+.tv-footer-note {
+  margin-left: auto;
 }
 /* Preserve every active match if inconsistent scheduling puts two on one court. */
 .tv-multiple .tv-current {
@@ -3753,12 +3811,6 @@ footer {
     margin-bottom: 3px;
     min-height: 20px;
   }
-  .tv-has-previous .tv-level-name {
-    margin-bottom: 2px;
-  }
-  .tv-has-previous .tv-match-description h3 {
-    margin-bottom: 4px;
-  }
   .tv-has-previous .tv-current {
     padding-top: 7px;
     padding-bottom: 7px;
@@ -3777,16 +3829,55 @@ footer {
 .tv-has-previous .tv-players {
   grid-template-rows: auto auto;
 }
-.tv-planned-start {
+.tv-time-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  align-items: stretch;
+  gap: 6px;
   flex: none;
   margin: 0 0 6px;
-  color: #59644e;
+  padding: 5px;
+  border: 1px solid #dce8d3;
+  border-radius: 6px;
+  background: #f7f9f5;
   font-size: clamp(14px, min(1.1vw, 1.9dvh), 21px);
   line-height: 1.3;
   font-variant-numeric: tabular-nums;
 }
-.tv-planned-start strong {
+.tv-time-details {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+}
+.tv-time-details > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 5px;
+}
+.tv-time-details span,
+.tv-time-details small {
+  color: #59644e;
+}
+.tv-time-details strong,
+.tv-time-duration strong {
   font-weight: 600;
+  white-space: nowrap;
+}
+.tv-time-details small {
+  font-size: inherit;
+  overflow-wrap: anywhere;
+}
+.tv-time-duration {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 6px;
+  border-radius: 4px;
+  background: #e7f1dd;
+  color: #304c1b;
   white-space: nowrap;
 }
 
@@ -4254,12 +4345,13 @@ body[data-league='relaksmisja'] .site-footer .footer-referee:focus-visible {
   gap: clamp(10px, 2dvh, 22px);
   margin: 0 0 auto;
 }
+.tv-upcoming-card .tv-upcoming-players {
+  gap: 6px;
+  margin: 0;
+}
 .tv-upcoming-players .tv-player-name {
   margin: 0;
   color: #343b30;
-}
-.tv-idle-content:has(.tv-upcoming-players) .tv-idle-stage {
-  margin-bottom: clamp(10px, 2dvh, 22px);
 }
 
 /* Relaksmisja: configuration remains within its existing visual theme. */
