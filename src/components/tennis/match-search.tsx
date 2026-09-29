@@ -2,7 +2,7 @@
 import { matchFormat } from '@/lib/tennis';
 import { RefereePoints } from './referee';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Search, X } from 'lucide-react';
+import { Menu, Search, X } from 'lucide-react';
 import { seededPlayerName, courtLabel, dateLabel, type Board } from '@/lib/tennis';
 import { normalizePlayerName, searchMatches } from '@/lib/match-search';
 import { YoutubeLink } from './youtube-link';
@@ -48,149 +48,192 @@ export function MatchSearch({
   archived: boolean;
   isDemo: boolean;
   error?: string;
-  navigation: ReactNode;
+  navigation: (closeMenu: () => void) => ReactNode;
 }) {
   const [query, setQuery] = useState(''),
-    [expanded, setExpanded] = useState(false);
+    [expanded, setExpanded] = useState(false),
+    [menuOpen, setMenuOpen] = useState(false);
   const input = useRef<HTMLInputElement>(null),
-    toggle = useRef<HTMLButtonElement>(null);
+    toggle = useRef<HTMLButtonElement>(null),
+    menuToggle = useRef<HTMLButtonElement>(null),
+    wasMenuOpen = useRef(false);
   useEffect(() => {
     if (expanded) input.current?.focus();
   }, [expanded]);
+  useEffect(() => {
+    if (menuOpen) wasMenuOpen.current = true;
+    else if (wasMenuOpen.current) {
+      wasMenuOpen.current = false;
+      if (menuToggle.current?.offsetParent) menuToggle.current.focus();
+    }
+  }, [menuOpen]);
   function close() {
     setExpanded(false);
     setQuery('');
     if (toggle.current?.offsetParent) toggle.current.focus();
   }
+  function closeMenu() {
+    setMenuOpen(false);
+  }
   const results = searchMatches(board, query),
     searching = !!query.trim();
   return (
     <section className="navigation-search" aria-label="Nawigacja i wyszukiwanie meczów">
-      <div className="navigation-search-row">
-        {navigation}
-        <button
-          ref={toggle}
-          type="button"
-          className="navigation-search-toggle"
-          aria-label={expanded ? 'Zamknij wyszukiwanie' : 'Szukaj zawodnika'}
-          aria-expanded={expanded}
-          aria-controls="navigation-search-field"
-          onClick={() => (expanded ? close() : setExpanded(true))}
-        >
-          {expanded ? <X size={21} /> : <Search size={21} />}
-        </button>
-        <div
-          id="navigation-search-field"
-          className={`match-search-field navigation-search-field ${expanded ? 'is-expanded' : ''}`}
-        >
-          <Search size={18} aria-hidden="true" />
-          <input
-            ref={input}
-            id="player-search"
-            type="search"
-            aria-label="Szukaj zawodnika po imieniu lub nazwisku"
-            placeholder="Szukaj zawodnika…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Escape') {
-                close();
-              }
-            }}
-            autoComplete="off"
-          />
-          {query && (
+      <button
+        ref={menuToggle}
+        type="button"
+        className="navigation-menu-toggle"
+        aria-label={menuOpen ? 'Zamknij menu' : 'Otwórz menu'}
+        aria-expanded={menuOpen}
+        aria-controls="navigation-search-panel"
+        onClick={() => setMenuOpen((open) => !open)}
+      >
+        <Menu
+          className="navigation-menu-icon navigation-menu-icon-open"
+          size={22}
+          aria-hidden="true"
+        />
+        <X
+          className="navigation-menu-icon navigation-menu-icon-close"
+          size={22}
+          aria-hidden="true"
+        />
+      </button>
+      <div
+        id="navigation-search-panel"
+        className={`navigation-search-panel ${menuOpen ? 'is-open' : ''}`}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape' && menuOpen) closeMenu();
+        }}
+      >
+        <div className="navigation-search-panel-inner">
+          <div className="navigation-search-row">
+            {navigation(closeMenu)}
             <button
+              ref={toggle}
               type="button"
-              aria-label="Wyczyść wyszukiwanie"
-              onClick={() => {
-                setQuery('');
-                input.current?.focus();
-              }}
+              className="navigation-search-toggle"
+              aria-label={expanded ? 'Zamknij wyszukiwanie' : 'Szukaj zawodnika'}
+              aria-expanded={expanded}
+              aria-controls="navigation-search-field"
+              onClick={() => (expanded ? close() : setExpanded(true))}
             >
-              <X size={18} />
+              {expanded ? <X size={21} /> : <Search size={21} />}
             </button>
+            <div
+              id="navigation-search-field"
+              className={`match-search-field navigation-search-field ${expanded ? 'is-expanded' : ''}`}
+            >
+              <Search size={18} aria-hidden="true" />
+              <input
+                ref={input}
+                id="player-search"
+                type="search"
+                aria-label="Szukaj zawodnika po imieniu lub nazwisku"
+                placeholder="Szukaj zawodnika…"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    close();
+                  }
+                }}
+                autoComplete="off"
+              />
+              {query && (
+                <button
+                  type="button"
+                  aria-label="Wyczyść wyszukiwanie"
+                  onClick={() => {
+                    setQuery('');
+                    input.current?.focus();
+                  }}
+                >
+                  <X size={18} />
+                </button>
+              )}
+            </div>
+          </div>
+          {searching && (
+            <div className="navigation-search-results">
+              <p className="match-search-scope">
+                Wszystkie poziomy i korty ·{' '}
+                {archived
+                  ? `archiwum ${board.season || ''}`
+                  : isDemo
+                    ? 'przykładowe mecze'
+                    : 'bieżący sezon'}
+              </p>
+              <p role="status" className="match-search-count">
+                {loading
+                  ? 'Wczytywanie meczów…'
+                  : error
+                    ? 'Nie udało się pobrać meczów.'
+                    : `Znalezione mecze: ${results.length}`}
+              </p>
+              {!loading &&
+                !error &&
+                (results.length ? (
+                  <div className="match-search-results">
+                    {results.map(({ m, l }) => (
+                      <article className="match-search-result" key={m.id}>
+                        <div className="match-search-meta">
+                          <span>{l.name}</span>
+                          <span className={`status ${m.status}`}>
+                            {m.status === 'live' && <LiveBall />}
+                            {m.status === 'live'
+                              ? 'W grze'
+                              : m.status === 'finished'
+                                ? 'Zakończony'
+                                : m.status === 'unfinished'
+                                  ? 'Mecz rozpoczęty, ale niedokończony'
+                                  : 'Oczekujący'}
+                          </span>
+                        </div>
+                        <h3 className="match-stage-name">
+                          {m.stage}
+                          <YoutubeLink url={m.youtubeUrl} />
+                        </h3>
+                        {m.players.map((name, index) => (
+                          <p
+                            key={index}
+                            className={`match-search-player ${m.winner === index ? 'search-winner' : ''}`}
+                          >
+                            <PlayerName
+                              name={seededPlayerName(m, index) || playerPlaceholder(l, m, index)}
+                              query={query}
+                            />
+                            {m.winner === index && (
+                              <span className="winner-check" role="img" aria-label="Zwycięzca">
+                                {' '}
+                                ✓
+                              </span>
+                            )}
+                          </p>
+                        ))}
+                        <RefereePoints match={m} format={matchFormat(l, m)} />
+                        <div className="match-search-details">
+                          <span>{courtLabel(m.court, board)}</span>
+                          <span>
+                            {m.date ? dateLabel(m.date) : 'Data do ustalenia'} ·{' '}
+                            {m.time || 'Godzina do ustalenia'}
+                          </span>
+                          {m.status === 'finished' && m.finishedTime && (
+                            <span className="finished-time">Zakończono o {m.finishedTime}</span>
+                          )}
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="match-search-empty">
+                    Brak pasujących meczów. Spróbuj wpisać samo nazwisko lub jego fragment.
+                  </p>
+                ))}
+            </div>
           )}
         </div>
       </div>
-      {searching && (
-        <div className="navigation-search-results">
-          <p className="match-search-scope">
-            Wszystkie poziomy i korty ·{' '}
-            {archived
-              ? `archiwum ${board.season || ''}`
-              : isDemo
-                ? 'przykładowe mecze'
-                : 'bieżący sezon'}
-          </p>
-          <p role="status" className="match-search-count">
-            {loading
-              ? 'Wczytywanie meczów…'
-              : error
-                ? 'Nie udało się pobrać meczów.'
-                : `Znalezione mecze: ${results.length}`}
-          </p>
-          {!loading &&
-            !error &&
-            (results.length ? (
-              <div className="match-search-results">
-                {results.map(({ m, l }) => (
-                  <article className="match-search-result" key={m.id}>
-                    <div className="match-search-meta">
-                      <span>{l.name}</span>
-                      <span className={`status ${m.status}`}>
-                        {m.status === 'live' && <LiveBall />}
-                        {m.status === 'live'
-                          ? 'W grze'
-                          : m.status === 'finished'
-                            ? 'Zakończony'
-                            : m.status === 'unfinished'
-                              ? 'Mecz rozpoczęty, ale niedokończony'
-                              : 'Oczekujący'}
-                      </span>
-                    </div>
-                    <h3 className="match-stage-name">
-                      {m.stage}
-                      <YoutubeLink url={m.youtubeUrl} />
-                    </h3>
-                    {m.players.map((name, index) => (
-                      <p
-                        key={index}
-                        className={`match-search-player ${m.winner === index ? 'search-winner' : ''}`}
-                      >
-                        <PlayerName
-                          name={seededPlayerName(m, index) || playerPlaceholder(l, m, index)}
-                          query={query}
-                        />
-                        {m.winner === index && (
-                          <span className="winner-check" role="img" aria-label="Zwycięzca">
-                            {' '}
-                            ✓
-                          </span>
-                        )}
-                      </p>
-                    ))}
-                    <RefereePoints match={m} format={matchFormat(l, m)} />
-                    <div className="match-search-details">
-                      <span>{courtLabel(m.court, board)}</span>
-                      <span>
-                        {m.date ? dateLabel(m.date) : 'Data do ustalenia'} ·{' '}
-                        {m.time || 'Godzina do ustalenia'}
-                      </span>
-                      {m.status === 'finished' && m.finishedTime && (
-                        <span className="finished-time">Zakończono o {m.finishedTime}</span>
-                      )}
-                    </div>
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <p className="match-search-empty">
-                Brak pasujących meczów. Spróbuj wpisać samo nazwisko lub jego fragment.
-              </p>
-            ))}
-        </div>
-      )}
     </section>
   );
 }
