@@ -587,18 +587,7 @@ export default function Home() {
           </div>
           <div className="header-inner">
             <a className="brand" href="/" aria-label={brand.name + ' — strona główna'}>
-              {isRtl ? (
-                <img
-                  className="rtl-header-art"
-                  src="/rtl-finals-banner.png"
-                  width={1200}
-                  height={420}
-                  alt="RTL Finals — mecze, które znaczą więcej"
-                  fetchPriority="high"
-                />
-              ) : (
-                <LeagueHeader />
-              )}
+              <LeagueHeader />
             </a>
           </div>
         </div>

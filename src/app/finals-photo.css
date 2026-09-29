@@ -1,9 +1,17 @@
+@font-face {
+  font-family: 'Manrope';
+  src: url('/fonts/manrope/Manrope-variable.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+}
+
 /* Shared heading outside the tab panels; the season remains live text. */
 .finals-photo-heading {
   background-color: #342923;
   background-image:
-    linear-gradient(90deg, #00000030, transparent 80%), url('/relaksmisja-finals-header.jpg');
-  background-position: center top;
+    linear-gradient(90deg, #00000030, transparent 80%), url('/relaksmisja-finals-header-sunset.png');
+  background-position: center 70%;
   background-size: cover;
   color: #fff;
 }
@@ -20,7 +28,7 @@
 .finals-photo-heading h1 {
   margin: 0;
   color: #fff;
-  font-family: Arial, sans-serif;
+  font-family: 'Manrope', Arial, sans-serif;
   font-size: clamp(26px, 2.5vw, 36px);
   font-weight: 700;
   line-height: 1.12;
@@ -38,7 +46,7 @@
 .finals-photo-kicker {
   margin-bottom: 8px;
   font-size: 0.72em;
-  font-weight: 400;
+  font-weight: 500;
 }
 
 .finals-photo-season {
@@ -64,7 +72,7 @@ body[data-league='relaksmisja'] .main-wrap.finals-main {
 @media (max-width: 600px) {
   .finals-photo-heading {
     background-image:
-      linear-gradient(90deg, #00000075, #00000020), url('/relaksmisja-finals-header.jpg');
+      linear-gradient(90deg, #00000075, #00000020), url('/relaksmisja-finals-header-sunset.png');
     background-position: 62% top;
   }
 
