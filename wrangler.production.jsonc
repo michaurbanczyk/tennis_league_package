@@ -1,7 +1,8 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "rtl",
+  "name": "relaksmisja",
   "account_id": "c4fb946ea49e60688d5b2efca9b495cf",
+  "workers_dev": true,
   "keep_vars": false,
   "main": "dist/server/worker-entry.mjs",
   "compatibility_date": "2026-05-15",
@@ -19,8 +20,8 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "rtl",
-      "database_id": "6311be03-b905-4f8e-9e9e-88a8ce36bbd6",
+      "database_name": "relaksmisja-production",
+      "database_id": "084ad514-4c62-4017-934d-0add4f0e4e8b",
     },
   ],
   "durable_objects": {
