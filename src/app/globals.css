@@ -3232,14 +3232,14 @@ footer {
   }
 }
 
-/* Navigation and player search share the mobile menu. */
+/* The mobile bar keeps player search beside the navigation menu. */
 .navigation-search {
   max-width: 1280px;
   margin: 0 auto;
   padding: 0 40px;
   color: #303030;
 }
-.navigation-menu-toggle {
+.navigation-mobile-bar {
   display: none;
 }
 .navigation-search-row {
@@ -3321,6 +3321,34 @@ footer {
 @media (max-width: 700px) {
   .navigation-search {
     padding: 0 18px;
+  }
+  .navigation-mobile-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 52px;
+  }
+  .navigation-mobile-search {
+    display: flex;
+    align-items: center;
+    flex: 0 0 50%;
+    width: 50%;
+    min-width: 0;
+    min-height: 42px;
+    margin-right: 12px;
+    padding: 0 10px;
+    gap: 8px;
+    box-shadow: none;
+    border-color: #d9e2cc;
+  }
+  .navigation-mobile-search input {
+    min-height: 40px;
+    padding: 8px 0;
+    font-size: 16px;
+  }
+  .navigation-mobile-search button {
+    min-width: 36px;
+    min-height: 36px;
   }
   .navigation-menu-toggle {
     display: flex;
@@ -3424,9 +3452,7 @@ footer {
   }
   .navigation-search-field,
   .navigation-search-field.is-expanded {
-    display: flex;
-    width: 100%;
-    margin: 12px 0 16px;
+    display: none;
   }
   .navigation-search-results {
     padding-bottom: 18px;
