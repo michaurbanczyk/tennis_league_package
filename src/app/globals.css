@@ -3318,7 +3318,7 @@ footer {
     min-height: 44px;
   }
 }
-@media (max-width: 700px) {
+@media (max-width: 1024px) {
   .navigation-search {
     padding: 0 18px;
   }
@@ -3458,7 +3458,7 @@ footer {
     padding-bottom: 18px;
   }
 }
-@media (max-width: 700px) and (prefers-reduced-motion: reduce) {
+@media (max-width: 1024px) and (prefers-reduced-motion: reduce) {
   .navigation-search-panel,
   .navigation-menu-icon {
     transition: none;
