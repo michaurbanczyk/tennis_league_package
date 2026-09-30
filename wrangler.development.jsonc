@@ -1,0 +1,43 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "rtl",
+  "account_id": "c4fb946ea49e60688d5b2efca9b495cf",
+  "workers_dev": true,
+  "keep_vars": false,
+  "main": "dist/server/worker-entry.mjs",
+  "compatibility_date": "2026-05-15",
+  "compatibility_flags": ["nodejs_compat"],
+  "no_bundle": true,
+  "rules": [
+    {
+      "type": "ESModule",
+      "globs": ["**/*.js", "**/*.mjs"],
+    },
+  ],
+  "assets": {
+    "directory": "dist/client",
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "rtl-development",
+      "database_id": "6311be03-b905-4f8e-9e9e-88a8ce36bbd6",
+    },
+  ],
+  "durable_objects": {
+    "bindings": [{ "name": "LEAGUE_UPDATES", "class_name": "LeagueUpdates" }],
+  },
+  "migrations": [{ "tag": "league-updates-v1", "new_sqlite_classes": ["LeagueUpdates"] }],
+  "r2_buckets": [
+    {
+      "binding": "BUCKET",
+      "bucket_name": "rtl-banners",
+    },
+  ],
+  "secrets": {
+    "required": ["ADMIN_CODE"],
+  },
+  "observability": {
+    "enabled": true,
+  },
+}

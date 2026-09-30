@@ -4,17 +4,19 @@ on:
   push:
     branches:
       - main
+      - development
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: deploy-rtl
+  group: deploy-rtl-${{ github.ref_name }}
   cancel-in-progress: false
 
 jobs:
   deploy:
+    if: github.ref_name == 'main' || github.ref_name == 'development'
     runs-on: ubuntu-24.04
     environment: prod
     timeout-minutes: 45
@@ -56,19 +58,34 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - name: Initialize production D1 schema
+      - name: Initialize D1 schema
         env:
           CLOUDFLARE_ACCOUNT_ID: c4fb946ea49e60688d5b2efca9b495cf
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: pnpm db:production:migrate
+        run: |
+          if [ "$GITHUB_REF_NAME" = development ]; then
+            pnpm db:development:migrate
+          else
+            pnpm db:production:migrate
+          fi
 
       - name: Deploy Worker
         env:
           CLOUDFLARE_ACCOUNT_ID: c4fb946ea49e60688d5b2efca9b495cf
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: pnpm deploy
+        run: |
+          if [ "$GITHUB_REF_NAME" = development ]; then
+            pnpm deploy:development
+          else
+            pnpm deploy
+          fi
 
       - name: Check live league API
         run: |
-          curl --fail --silent --show-error https://relaksmisja.rtlfinals.workers.dev/api/league |
+          if [ "$GITHUB_REF_NAME" = development ]; then
+            worker_url=https://rtl.rtlfinals.workers.dev
+          else
+            worker_url=https://relaksmisja.rtlfinals.workers.dev
+          fi
+          curl --fail --silent --show-error "$worker_url/api/league" |
             node -e 'let body=""; process.stdin.on("data", chunk => body += chunk); process.stdin.on("end", () => { const league = JSON.parse(body); if (league.theme !== "relaksmisja" || !Array.isArray(league.levels)) process.exit(1); });'

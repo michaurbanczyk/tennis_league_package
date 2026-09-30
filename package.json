@@ -13,13 +13,15 @@
     "test": "node scripts/test-all.mjs",
     "prepare": "husky",
     "deploy": "node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js deploy --config wrangler.production.jsonc",
+    "deploy:development": "node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js deploy --config wrangler.development.jsonc",
     "start": "node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js dev --config dist/server/wrangler.json --local --persist-to .wrangler/state --ip 127.0.0.1 --inspector-port 0",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "db:generate": "drizzle-kit generate",
     "db:local:init": "node scripts/init-local-db.mjs",
-    "db:production:migrate": "node scripts/init-production-db.mjs"
+    "db:production:migrate": "node scripts/init-production-db.mjs",
+    "db:development:migrate": "node scripts/init-production-db.mjs wrangler.development.jsonc"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

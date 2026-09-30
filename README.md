@@ -1,6 +1,6 @@
-# Relaksmisja Tennis League
+# Tennis League
 
-Standalone Next.js application for the Relaksmisja tennis finals. The frontend and API run through Vinext on Cloudflare Workers. Match and season data are stored in D1; banners and PDF announcements use R2.
+Standalone Next.js application for tennis finals. The frontend and API run through Vinext on Cloudflare Workers. Match and season data are stored in D1; banners and PDF announcements use R2.
 
 Active matches also have records in `match_rows`. Each record has its own revision. Score requests send the selected match's revision, so edits to different matches can proceed concurrently; an outdated edit to the same match receives HTTP 409. The `boards` JSON remains the tournament snapshot used by brackets, archives, and backups. The page still polls for updates every three seconds; WebSockets are a separate change.
 
@@ -49,9 +49,9 @@ The build produces a Cloudflare Worker in `dist/server` and client assets in `di
 
 ## Deploy to Cloudflare
 
-`wrangler.production.jsonc` targets the `relaksmisja` Worker at `relaksmisja.rtlfinals.workers.dev`, the `relaksmisja-production` D1 database (`DB`), and the existing R2 bucket (`BUCKET`). The new Worker must have its own `ADMIN_CODE` secret. `pnpm db:production:migrate` creates the base D1 tables only if they are all absent, then creates `match_rows` if needed. It refuses a partially initialized base schema. The GitHub workflow runs this before deployment.
+`wrangler.production.jsonc` targets the `relaksmisja` Worker at `relaksmisja.rtlfinals.workers.dev` and its existing D1 database. `wrangler.development.jsonc` targets the `rtl` Worker at `rtl.rtlfinals.workers.dev` and D1 database `6311be03-b905-4f8e-9e9e-88a8ce36bbd6`. Both Workers use the `rtl-banners` R2 bucket, so banner uploads and deletions are shared. Each Worker needs its own `ADMIN_CODE` secret. The migration commands create the base D1 tables only if they are all absent, then create `match_rows` if needed. They refuse a partially initialized base schema. The GitHub workflow runs the appropriate migration before deployment.
 
-Live league change notifications are sent through a hibernating Durable Object WebSocket at `/api/league/live`. D1 remains the source of truth; connected browsers fetch the current league after a notification. The first deployment creates the `LeagueUpdates` Durable Object namespace through the migration in `wrangler.production.jsonc`. No extra D1 migration is needed for WebSockets.
+Live league change notifications are sent through a hibernating Durable Object WebSocket at `/api/league/live`. D1 remains the source of truth; connected browsers fetch the current league after a notification. The first deployment of each Worker creates its own `LeagueUpdates` Durable Object namespace through its Wrangler migration. No extra D1 migration is needed for WebSockets.
 
 After verifying the Cloudflare account, resource IDs, and secret:
 
@@ -66,6 +66,8 @@ pnpm db:production:migrate
 pnpm deploy
 ```
 
+For a manual deployment of the `development` branch, run `pnpm db:development:migrate` and `pnpm deploy:development` after building. Set `ADMIN_CODE` on the `rtl` Worker before deploying it.
+
 For another Cloudflare account, replace the account, Worker, D1, and R2 identifiers in `wrangler.production.jsonc`, create those resources, apply the initial D1 schema to the new empty database, and set `ADMIN_CODE` as a Worker secret. `.openai/hosting.json` describes the existing Sites project and does not configure standalone Wrangler deployment.
 
-The GitHub workflow `.github/workflows/deploy-rtl.yml` runs the checks and deploys on pushes to `main` or when manually dispatched. It expects `CLOUDFLARE_API_TOKEN` in the `prod` GitHub environment. Source control contains no production database contents, uploaded R2 objects, session tokens, or organizer secret.
+The GitHub workflow `.github/workflows/deploy-rtl.yml` runs the checks and deploys `main` to `relaksmisja` and `development` to `rtl` on pushes or when manually dispatched from either branch. It expects `CLOUDFLARE_API_TOKEN` in the `prod` GitHub environment. Source control contains no database contents, uploaded R2 objects, session tokens, or organizer secret.

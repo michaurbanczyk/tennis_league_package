@@ -2,7 +2,7 @@
 import { matchFormat } from '@/lib/tennis';
 import { RefereePoints } from './referee';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Search, X } from 'lucide-react';
+import { Menu, Search, X } from 'lucide-react';
 import { seededPlayerName, courtLabel, dateLabel, type Board } from '@/lib/tennis';
 import { normalizePlayerName, searchMatches } from '@/lib/match-search';
 import { YoutubeLink } from './youtube-link';
@@ -48,53 +48,58 @@ export function MatchSearch({
   archived: boolean;
   isDemo: boolean;
   error?: string;
-  navigation: ReactNode;
+  navigation: (closeMenu: () => void) => ReactNode;
 }) {
   const [query, setQuery] = useState(''),
-    [expanded, setExpanded] = useState(false);
+    [expanded, setExpanded] = useState(false),
+    [menuOpen, setMenuOpen] = useState(false);
   const input = useRef<HTMLInputElement>(null),
-    toggle = useRef<HTMLButtonElement>(null);
+    mobileInput = useRef<HTMLInputElement>(null),
+    toggle = useRef<HTMLButtonElement>(null),
+    menuToggle = useRef<HTMLButtonElement>(null),
+    wasMenuOpen = useRef(false),
+    restoreMenuFocus = useRef(true);
   useEffect(() => {
     if (expanded) input.current?.focus();
   }, [expanded]);
+  useEffect(() => {
+    if (menuOpen) {
+      wasMenuOpen.current = true;
+    } else if (wasMenuOpen.current) {
+      wasMenuOpen.current = false;
+      if (restoreMenuFocus.current && menuToggle.current?.offsetParent) menuToggle.current.focus();
+    }
+  }, [menuOpen]);
   function close() {
     setExpanded(false);
     setQuery('');
     if (toggle.current?.offsetParent) toggle.current.focus();
   }
+  function closeMenu() {
+    setMenuOpen(false);
+  }
   const results = searchMatches(board, query),
     searching = !!query.trim();
   return (
     <section className="navigation-search" aria-label="Nawigacja i wyszukiwanie meczów">
-      <div className="navigation-search-row">
-        {navigation}
-        <button
-          ref={toggle}
-          type="button"
-          className="navigation-search-toggle"
-          aria-label={expanded ? 'Zamknij wyszukiwanie' : 'Szukaj zawodnika'}
-          aria-expanded={expanded}
-          aria-controls="navigation-search-field"
-          onClick={() => (expanded ? close() : setExpanded(true))}
-        >
-          {expanded ? <X size={21} /> : <Search size={21} />}
-        </button>
-        <div
-          id="navigation-search-field"
-          className={`match-search-field navigation-search-field ${expanded ? 'is-expanded' : ''}`}
-        >
-          <Search size={18} aria-hidden="true" />
+      <div className="navigation-mobile-bar">
+        <div className="navigation-mobile-search match-search-field">
+          <Search size={19} aria-hidden="true" />
           <input
-            ref={input}
-            id="player-search"
+            ref={mobileInput}
             type="search"
             aria-label="Szukaj zawodnika po imieniu lub nazwisku"
             placeholder="Szukaj zawodnika…"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Escape') {
-                close();
+            onFocus={() => {
+              restoreMenuFocus.current = false;
+              setMenuOpen(false);
+            }}
+            onChange={(event) => setQuery(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') {
+                setQuery('');
+                mobileInput.current?.blur();
               }
             }}
             autoComplete="off"
@@ -105,12 +110,92 @@ export function MatchSearch({
               aria-label="Wyczyść wyszukiwanie"
               onClick={() => {
                 setQuery('');
-                input.current?.focus();
+                mobileInput.current?.focus();
               }}
             >
-              <X size={18} />
+              <X size={18} aria-hidden="true" />
             </button>
           )}
+        </div>
+        <button
+          ref={menuToggle}
+          type="button"
+          className="navigation-menu-toggle"
+          aria-label={menuOpen ? 'Zamknij menu' : 'Otwórz menu'}
+          aria-expanded={menuOpen}
+          aria-controls="navigation-search-panel"
+          onClick={() => {
+            restoreMenuFocus.current = true;
+            setMenuOpen((open) => !open);
+          }}
+        >
+          <Menu
+            className="navigation-menu-icon navigation-menu-icon-open"
+            size={22}
+            aria-hidden="true"
+          />
+          <X
+            className="navigation-menu-icon navigation-menu-icon-close"
+            size={22}
+            aria-hidden="true"
+          />
+        </button>
+      </div>
+      <div
+        id="navigation-search-panel"
+        className={`navigation-search-panel ${menuOpen ? 'is-open' : ''}`}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape' && menuOpen) closeMenu();
+        }}
+      >
+        <div className="navigation-search-panel-inner">
+          <div className="navigation-search-row">
+            {navigation(closeMenu)}
+            <button
+              ref={toggle}
+              type="button"
+              className="navigation-search-toggle"
+              aria-label={expanded ? 'Zamknij wyszukiwanie' : 'Szukaj zawodnika'}
+              aria-expanded={expanded}
+              aria-controls="navigation-search-field"
+              onClick={() => (expanded ? close() : setExpanded(true))}
+            >
+              {expanded ? <X size={21} /> : <Search size={21} />}
+            </button>
+            <div
+              id="navigation-search-field"
+              className={`match-search-field navigation-search-field ${expanded ? 'is-expanded' : ''}`}
+            >
+              <Search size={18} aria-hidden="true" />
+              <input
+                ref={input}
+                id="player-search"
+                type="search"
+                aria-label="Szukaj zawodnika po imieniu lub nazwisku"
+                placeholder="Szukaj zawodnika…"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    close();
+                  }
+                }}
+                autoComplete="off"
+              />
+              {query && (
+                <button
+                  type="button"
+                  aria-label="Wyczyść wyszukiwanie"
+                  onClick={() => {
+                    setQuery('');
+                    input.current?.focus();
+                  }}
+                >
+                  <X size={18} />
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
       {searching && (

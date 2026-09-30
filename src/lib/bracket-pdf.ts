@@ -126,15 +126,14 @@ function drawCheck(page: PDFPage, x: number, y: number) {
   });
 }
 
-function score(match: Match, index: number) {
+function scoreCells(match: Match, index: number) {
   if (match.status !== 'finished' && match.status !== 'live' && match.status !== 'unfinished')
-    return '';
+    return [];
   if (match.status !== 'finished' && !match.sets.some((set) => set.some((value) => value > 0)))
-    return '';
+    return [];
   return match.sets
     .filter((set) => match.status === 'finished' || set.some((value) => value > 0))
-    .map((set) => String(set[index] ?? 0))
-    .join('  ');
+    .map((set) => String(set[index] ?? 0));
 }
 
 function pdfPlayerName(level: Level, match: Match, index: number) {
@@ -157,20 +156,34 @@ function drawMatch(
   width: number,
   height: number,
   large: boolean,
+  emphasis: 'prominent' | 'medium' | null = null,
 ) {
   const y = centerY - height / 2;
-  const pad = large ? 9 : 6;
-  const stageSize = large ? 8.5 : 7;
-  const nameSize = large ? 9.6 : 8;
-  const metaSize = large ? 7.7 : 6.7;
-  const rowHeight = large ? 25 : 16;
-  const maxLines = large ? 3 : 2;
+  const pad = emphasis === 'prominent' ? 11 : emphasis === 'medium' ? 8 : large ? 9 : 6;
+  const stageSize = emphasis === 'prominent' ? 10 : emphasis === 'medium' ? 8.2 : large ? 8.5 : 7;
+  const nameSize = emphasis === 'prominent' ? 11.5 : emphasis === 'medium' ? 9.6 : large ? 9.6 : 8;
+  const metaSize = emphasis === 'prominent' ? 8.6 : emphasis === 'medium' ? 7.4 : large ? 7.7 : 6.7;
+  const rowHeight = emphasis === 'prominent' ? 24 : emphasis === 'medium' ? 19 : large ? 20 : 13;
+  const maxLines = 2;
+  const stripHeight = emphasis === 'prominent' ? 22 : emphasis === 'medium' ? 17 : large ? 17 : 14;
+  const stripTextOffset =
+    emphasis === 'prominent' ? 15 : emphasis === 'medium' ? 12 : large ? 12 : 10;
+  const scoreCellWidth =
+    emphasis === 'prominent' ? 25 : emphasis === 'medium' ? 21 : large ? 21 : 16;
+  const lineHeight =
+    emphasis === 'prominent' ? 10.5 : emphasis === 'medium' ? 8.5 : large ? 8.5 : 6.1;
+  const tableX = x + pad;
+  const tableWidth = width - pad * 2;
+  const scoreX = tableX + tableWidth - scoreCellWidth * 3;
+  const tableTop =
+    y + height - stripHeight - (emphasis === 'prominent' ? 5 : large || emphasis ? 3 : 1);
+  const tableBottom = tableTop - rowHeight * 2;
   page.drawRectangle({ x, y, width, height, color: WHITE, borderColor: LINE, borderWidth: 0.8 });
   page.drawRectangle({
     x,
-    y: y + height - (large ? 17 : 14),
+    y: y + height - stripHeight,
     width,
-    height: large ? 17 : 14,
+    height: stripHeight,
     color: PALE,
   });
   drawText(
@@ -178,7 +191,7 @@ function drawMatch(
     font,
     match.stage.toUpperCase(),
     x + pad,
-    y + height - (large ? 12 : 10),
+    y + height - stripTextOffset,
     stageSize,
     NAVY,
     true,
@@ -188,48 +201,101 @@ function drawMatch(
       page,
       font,
       'W GRZE',
-      x + width - (large ? 47 : 40),
-      y + height - (large ? 12 : 10),
+      x + pad + font.bold.widthOfTextAtSize(match.stage.toUpperCase(), stageSize) + 8,
+      y + height - stripTextOffset,
       stageSize,
       MUTED,
     );
 
-  const nameWidth = width - pad * 2 - (large ? 60 : 48);
+  const setLabels = ['S1', 'S2', (match.format || level.format) === 'super' ? 'STB' : 'S3'];
+  setLabels.forEach((label, index) => {
+    const size = emphasis === 'prominent' ? 7.5 : emphasis === 'medium' || large ? 6.2 : 5.5;
+    drawText(
+      page,
+      font,
+      label,
+      scoreX +
+        scoreCellWidth * index +
+        (scoreCellWidth - font.regular.widthOfTextAtSize(label, size)) / 2,
+      y + height - stripTextOffset,
+      size,
+      MUTED,
+    );
+  });
+
+  page.drawRectangle({
+    x: tableX,
+    y: tableBottom,
+    width: tableWidth,
+    height: rowHeight * 2,
+    color: WHITE,
+    borderColor: LINE,
+    borderWidth: 0.6,
+  });
+  page.drawLine({
+    start: { x: tableX, y: tableBottom + rowHeight },
+    end: { x: tableX + tableWidth, y: tableBottom + rowHeight },
+    thickness: 0.6,
+    color: LINE,
+  });
+  const nameWidth = scoreX - tableX - pad - 13;
   [0, 1].forEach((index) => {
+    const rowBottom = tableTop - rowHeight * (index + 1);
     const name = pdfPlayerName(level, match, index);
     let size = nameSize;
     let nameLines = lines(font.regular, name, size, nameWidth);
-    while (nameLines.length > maxLines && size > 6.8) {
+    while (
+      (nameLines.length > maxLines ||
+        (nameLines.length > 1 &&
+          (lineHeight * nameLines.length > rowHeight || size > rowHeight / 2))) &&
+      size > 5.8
+    ) {
       size -= 0.3;
       nameLines = lines(font.regular, name, size, nameWidth);
     }
-    const top = y + height - (large ? 23 : 19) - index * rowHeight;
+    const firstBaseline =
+      rowBottom + (rowHeight + lineHeight * (nameLines.length - 1) - size * 0.85) / 2;
     nameLines.forEach((line, lineIndex) =>
       drawText(
         page,
         font,
         line,
-        x + pad,
-        top - lineIndex * (large ? 8.5 : 7),
+        tableX + pad / 2,
+        firstBaseline - lineIndex * lineHeight,
         size,
         NAVY,
         match.status === 'finished' && match.winner === index,
       ),
     );
-    const result = score(match, index);
-    if (result)
+    if (match.status === 'finished' && match.winner === index)
+      drawCheck(page, scoreX - 11, rowBottom + (rowHeight - 6) / 2);
+    const scores = scoreCells(match, index);
+    setLabels.forEach((_, setIndex) => {
+      const cellX = scoreX + scoreCellWidth * setIndex;
+      page.drawRectangle({
+        x: cellX,
+        y: rowBottom,
+        width: scoreCellWidth,
+        height: rowHeight,
+        color: PALE,
+        borderColor: LINE,
+        borderWidth: 0.45,
+      });
+      const value = scores[setIndex];
+      if (!value) return;
+      const scoreFont =
+        match.status === 'finished' && match.winner === index ? font.bold : font.regular;
       drawText(
         page,
         font,
-        result,
-        x + width - pad - font.regular.widthOfTextAtSize(result, nameSize),
-        top,
+        value,
+        cellX + (scoreCellWidth - scoreFont.widthOfTextAtSize(value, nameSize)) / 2,
+        rowBottom + (rowHeight - nameSize * 0.85) / 2,
         nameSize,
         NAVY,
         match.status === 'finished' && match.winner === index,
       );
-    if (match.status === 'finished' && match.winner === index)
-      drawCheck(page, x + width - (large ? 60 : 48), top - 1);
+    });
   });
   const schedule = [dateLabel(match.date), match.time].filter(Boolean).join(' · ');
   const court = match.court ? courtLabel(match.court, board) : '';
@@ -237,14 +303,16 @@ function drawMatch(
   if (meta) {
     const metaLines = lines(font.regular, meta, metaSize, width - pad * 2);
     metaLines
-      .slice(0, 2)
+      .slice(0, large || emphasis ? 2 : 1)
       .forEach((line, index) =>
         drawText(
           page,
           font,
           line,
           x + pad,
-          y + pad - 1 + (Math.min(metaLines.length, 2) - 1 - index) * (metaSize + 1),
+          y +
+            (large || emphasis ? pad - 1 : 2) +
+            (Math.min(metaLines.length, large || emphasis ? 2 : 1) - 1 - index) * (metaSize + 1),
           metaSize,
           MUTED,
         ),
@@ -283,7 +351,7 @@ function drawHeader(
   drawText(
     page,
     font,
-    'Relaksmisja Tennis League',
+    'Tennis League',
     textX,
     height - (large ? 35 : 30),
     large ? 16 : 12,
@@ -347,10 +415,6 @@ function drawRoundPage(
   const { width, height } = page.getSize();
   const large = width > 900;
   const margin = large ? 42 : 30;
-  const gap = large ? 25 : 16;
-  const cardHeight = large ? 78 : 52;
-  const top = height - (large ? 145 : 126);
-  const bottom = large ? 61 : 37;
   const rounds = plan.rounds;
   if (!rounds.length) {
     drawText(
@@ -364,10 +428,19 @@ function drawRoundPage(
     );
     return;
   }
-  const count = rounds.length;
-  const cardWidth = Math.min(large ? 280 : 270, (width - 2 * margin - gap * (count - 1)) / count);
-  const startX = (width - (count * cardWidth + (count - 1) * gap)) / 2;
   const firstCount = rounds[0].matches.length;
+  const emphasis =
+    !large && firstCount <= 2 ? 'prominent' : !large && firstCount <= 4 ? 'medium' : null;
+  const gap = emphasis === 'prominent' ? 28 : large ? 25 : 16;
+  const cardHeight = emphasis === 'prominent' ? 102 : emphasis === 'medium' ? 74 : large ? 78 : 52;
+  const top = emphasis === 'prominent' ? 440 : height - (large ? 145 : 126);
+  const bottom = emphasis === 'prominent' ? 188 : large ? 61 : 37;
+  const count = rounds.length;
+  const cardWidth = Math.min(
+    emphasis === 'prominent' ? 330 : large ? 280 : 270,
+    (width - 2 * margin - gap * (count - 1)) / count,
+  );
+  const startX = (width - (count * cardWidth + (count - 1) * gap)) / 2;
   const pitch = (top - bottom) / firstCount;
   const positions = new Map<string, { x: number; y: number }>();
   rounds.forEach((round, column) => {
@@ -426,6 +499,7 @@ function drawRoundPage(
         cardWidth,
         cardHeight,
         large,
+        emphasis,
       );
     }),
   );
@@ -438,10 +512,11 @@ function drawRoundPage(
       board,
       match,
       x,
-      bottom + cardHeight / 2 + index * (cardHeight + 10),
+      (emphasis === 'prominent' ? 117 : bottom + cardHeight / 2) + index * (cardHeight + 10),
       cardWidth,
       cardHeight,
       large,
+      emphasis,
     );
   });
 }
@@ -557,7 +632,7 @@ export async function createBracketPdf({
     else drawRoundPage(page, font, board, displayLevel, plan);
   }
   document.setTitle(`Drabinka finałowa - ${level.name} - ${board.season || 'sezon'}`);
-  document.setSubject('Relaksmisja Tennis League');
+  document.setSubject('Tennis League');
   document.setCreator('RTL Finals');
   return document.save();
 }

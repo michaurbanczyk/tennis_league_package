@@ -599,8 +599,15 @@ export default function Home() {
           archived={archived}
           isDemo={isDemo}
           error={archiveError}
-          navigation={
-            <Tabs value={view} onValueChange={setView} className="brand-navigation page-tabs">
+          navigation={(closeMenu) => (
+            <Tabs
+              value={view}
+              onValueChange={(next) => {
+                setView(next);
+                closeMenu();
+              }}
+              className="brand-navigation page-tabs"
+            >
               <TabsList aria-label="Widok strony">
                 <TabsTrigger value="results">TABLICA WYNIKÓW</TabsTrigger>
                 <TabsTrigger value="schedule">PLAN GIER NA KORTACH</TabsTrigger>
@@ -611,7 +618,7 @@ export default function Home() {
                 <TabsTrigger value="announcements">KOMUNIKATY</TabsTrigger>
               </TabsList>
             </Tabs>
-          }
+          )}
         />
       </header>
       {isRtl && (
@@ -619,7 +626,7 @@ export default function Home() {
           <div className="finals-photo-inner">
             <h1 id="finals-photo-title">
               <span className="finals-photo-kicker">Finały</span>
-              <span className="finals-photo-name">Relaksmisja Tennis League</span>
+              <span className="finals-photo-name">Tennis League</span>
               {board.season && <span className="finals-photo-season">{board.season}</span>}
             </h1>
           </div>
