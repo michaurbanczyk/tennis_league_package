@@ -3025,8 +3025,8 @@ footer {
   box-shadow: 0 0 0 3px #93bf4e15;
 }
 .match-search-field:focus-within {
-  border-color: #80ab3c;
-  box-shadow: 0 0 0 3px #93bf4e30;
+  border-color: #eb7626;
+  box-shadow: 0 0 0 3px #eb762630;
 }
 .match-search-field > svg {
   flex: none;
