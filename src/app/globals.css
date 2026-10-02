@@ -1920,17 +1920,17 @@ body {
   color: #787878;
 }
 .card-controls {
-  background: #fff;
-  border-color: #efefef;
+  background: #f4f7f9;
+  border-color: #d4dfe5;
 }
 .card-controls button {
   font-size: 14px;
-  color: #719e3a;
+  color: #19324c;
   text-transform: uppercase;
   letter-spacing: 0.15px;
 }
 .card-controls button + button {
-  border-color: #eee;
+  border-color: #d4dfe5;
 }
 .bracket-arrow {
   color: #b5b5b5;
@@ -2788,18 +2788,39 @@ footer {
   justify-content: center;
   gap: 2px;
   padding: 5px 8px;
-  border-left: 1px solid #eee;
-  color: #737c8b;
+  border-left: 1px solid #d4dfe5;
+  color: #19324c;
   font-size: 11px;
   line-height: 1.2;
 }
 .card-controls .match-code code {
-  color: #303b4e;
+  color: #19324c;
   font-family: inherit;
   font-size: 15px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.06em;
+}
+@media (max-width: 480px) {
+  .card-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .card-controls button {
+    width: 100%;
+    white-space: nowrap;
+  }
+  .card-controls button:only-child {
+    grid-column: 1 / -1;
+  }
+  .card-controls .match-code {
+    grid-column: 1 / -1;
+    min-height: 40px;
+    flex-direction: row;
+    gap: 8px;
+    border-top: 1px solid #d4dfe5;
+    border-left: 0;
+  }
 }
 
 .season-picker {

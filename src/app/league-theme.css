@@ -251,7 +251,6 @@ body[data-league='relaksmisja'] .season-heading {
 }
 body[data-league='relaksmisja'] .level-title h3,
 body[data-league='relaksmisja'] .text-button,
-body[data-league='relaksmisja'] .card-controls button,
 body[data-league='relaksmisja'] .season-management-trigger {
   color: #363636;
 }
