@@ -1,12 +1,12 @@
-import { Clock3, LockKeyhole, Plus, Settings2, ShieldCheck, Trophy } from 'lucide-react';
+import { LockKeyhole, Plus, Settings2, Trophy } from 'lucide-react';
 import { LiveBall } from '@/components/tennis/live-ball';
 import { MatchTiming } from '@/components/tennis/match-timing';
+import { RefereeWhistleIcon } from '@/components/tennis/referee-whistle-icon';
 import { YoutubeLink } from '@/components/tennis/youtube-link';
 import type { LeagueModal } from '@/lib/league-page-types';
 import {
   canEditMatch,
   courtLabel,
-  dateLabel,
   hasMatchSchedule,
   MATCH_SCHEDULE_REQUIRED,
   matchFormat,
@@ -92,7 +92,14 @@ export function MatchCard({
         </span>
         <span className="court">{courtLabel(m.court, board)}</span>
       </div>
-      <div className="match-format-label">{matchFormatLabel(l, m)}</div>
+      <div className="match-format-row">
+        <div className="match-format-label">{matchFormatLabel(l, m)}</div>
+        {m.refereeEnabled && (
+          <div className="referee-card-label">
+            <RefereeWhistleIcon size={13} /> Mecz sędziowany
+          </div>
+        )}
+      </div>
       <div className="score-labels">
         <span className="match-stage-name">
           {m.stage}
@@ -125,11 +132,7 @@ export function MatchCard({
             </span>
             <span>
               {seededPlayerName(m, i) || playerPlaceholder(l, m, i)}
-              {m.winner === i && (
-                <span className="winner-check" role="img" aria-label="Zwycięzca">
-                  ✓
-                </span>
-              )}
+              {m.winner === i && <span className="sr-only">, zwycięzca</span>}
             </span>
           </div>
           <div className="numbers">
@@ -147,17 +150,6 @@ export function MatchCard({
           </div>
         </div>
       ))}
-      {m.refereeEnabled && (
-        <div className="referee-card-label">
-          <ShieldCheck size={13} /> Mecz sędziowany
-        </div>
-      )}
-      <div className="card-bottom">
-        <span>
-          <Clock3 size={14} />
-          {m.date ? dateLabel(m.date) : 'Data do ustalenia'}
-        </span>
-      </div>
       <MatchTiming match={m} serverTime={serverTime} />
 
       {!archived &&
@@ -188,6 +180,12 @@ export function MatchCard({
               >
                 <Settings2 size={16} /> Edytuj mecz
               </button>
+            )}
+            {admin && !isDemo && (
+              <div className="match-code" aria-label="Kod meczu">
+                <span>Kod meczu</span>
+                <code>{m.currentCode || '—'}</code>
+              </div>
             )}
           </div>
         )}

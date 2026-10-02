@@ -7,6 +7,7 @@ import { exportBackup, restoreBackup, readBackupRequest, BACKUP_MAX_BYTES } from
 import { SITE_LEAGUE, LEAGUE_FEATURES } from '@/lib/site-league';
 import { seasonKey, numberedSeason } from '@/lib/league-theme';
 import { normalizeYoutubeUrl } from '@/lib/youtube';
+import { heroBannerSchema } from '@/lib/hero-banner';
 import { database, adminCode } from '@/db/raw';
 import { publishLeagueChange } from '@/lib/league-updates';
 import {
@@ -123,6 +124,7 @@ function publicData(b: Board, access: string | null = null) {
   return {
     theme: SITE_LEAGUE,
     season: b.season ?? null,
+    ...(b.heroBanner ? { heroBanner: b.heroBanner } : {}),
     finalsDates: b.finalsDates ?? [],
     ...(b.courtGroups ? { courtGroups: b.courtGroups } : {}),
     levels: b.levels.map((l) => ({
@@ -680,11 +682,29 @@ async function handlePost(req: Request, retry: number): Promise<Response> {
         { error: 'Każda liga ma własny adres. Przejdź do wybranej ligi linkiem na dole strony.' },
         400,
       );
+    } else if (body.action === 'hero_banner') {
+      if (access !== 'admin')
+        return json({ error: 'Tylko organizator może zmieniać tekst banera.' }, 403);
+      if (SITE_LEAGUE !== 'relaksmisja')
+        return json({ error: 'Ta liga nie ma edytowalnego banera.' }, 400);
+      const banner = heroBannerSchema.safeParse(body.heroBanner);
+      if (!banner.success)
+        return json({ error: 'Sprawdź tekst i rozmiary czcionek banera.' }, 400);
+      const bannerSeason = validateSiteSeason(banner.data.season);
+      if (
+        seasonKey(bannerSeason) !== seasonKey(board.season || '') &&
+        (await archives()).some((archive: any) => seasonKey(archive.season) === seasonKey(bannerSeason))
+      )
+        throw Error('Ten sezon jest już w archiwum.');
+      board.season = bannerSeason;
+      board.heroBanner = { ...banner.data, season: bannerSeason };
     } else if (body.action === 'season') {
       if (access !== 'admin') return json({ error: 'Tylko organizator może zmieniać sezon.' }, 403);
       const season = validateSiteSeason(body.season);
       if ((await archives()).some((a: any) => seasonKey(a.season) === seasonKey(season)))
         throw Error('Ten sezon jest już w archiwum.');
+      if (SITE_LEAGUE === 'relaksmisja' && board.heroBanner)
+        board.heroBanner.season = season;
       board.season = season;
       if (body.finalsDates !== undefined) {
         const dates = finalsDates(body.finalsDates, validDate);

@@ -2362,6 +2362,9 @@ footer {
   font-weight: 700;
   color: #343e2a;
 }
+.match-card .player-row.winner {
+  background: #edf3e6;
+}
 .final-card {
   border: 2px solid #8fc34a;
   box-shadow: 0 5px 20px #668e2220;
@@ -2770,6 +2773,33 @@ footer {
   gap: 6px;
   padding: 10px 8px;
   text-transform: none;
+}
+.card-controls button:first-child {
+  text-transform: none;
+  letter-spacing: normal;
+}
+.card-controls .match-code {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 5px 8px;
+  border-left: 1px solid #eee;
+  color: #737c8b;
+  font-size: 11px;
+  line-height: 1.2;
+}
+.card-controls .match-code code {
+  color: #303b4e;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
 }
 
 .season-picker {
@@ -4300,6 +4330,41 @@ body[data-league='relaksmisja'] .knockout-lines path {
 .site-footer {
   flex-wrap: wrap;
 }
+.footer-brand-powered,
+.footer-powered {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.footer-brand-powered > .footer-divider,
+.footer-brand-powered > .footer-powered {
+  padding: 0;
+}
+.footer-brand-powered > .footer-powered {
+  color: #666;
+}
+.footer-powered a {
+  display: inline-flex;
+  width: 170px;
+  height: 40px;
+  overflow: hidden;
+  border-radius: 3px;
+}
+.footer-powered a:hover {
+  opacity: 0.82;
+}
+.footer-powered a:focus-visible {
+  outline: 2px solid #eb7626;
+  outline-offset: 3px;
+}
+.footer-powered img {
+  display: block;
+  width: 170px;
+  height: 40px;
+  object-fit: cover;
+  object-position: center;
+}
 .site-footer .footer-tools {
   display: flex;
   align-items: center;
@@ -4808,34 +4873,72 @@ body[data-league='relaksmisja'] .tv-brand-logos img.custom-banner-header {
 }
 .match-timing {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 15px 18px;
-  padding: 16px 18px;
-  background: #f7f8fa;
+  grid-template-columns: minmax(95px, 1.3fr) repeat(4, minmax(70px, 1fr));
+  margin: 16px 18px 0;
+  padding: 12px 0 14px;
   border-top: 1px solid #e6e9ed;
+  overflow-x: auto;
 }
-.match-timing > div {
+.match-timing-item {
   min-width: 0;
+  padding: 0 9px;
+  border-left: 1px solid #e6e9ed;
+}
+.match-timing-item:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+.match-timing-item:last-child {
+  padding-right: 0;
 }
 .match-timing span {
-  display: block;
-  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
   color: #737c8b;
-  margin-bottom: 3px;
+  margin-bottom: 5px;
+  white-space: nowrap;
+}
+.match-timing span svg {
+  flex: none;
 }
 .match-timing strong {
   display: block;
-  font-size: 18px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
   color: #303b4e;
   font-variant-numeric: tabular-nums;
+  line-height: 1.25;
 }
 .match-timing strong.match-duration {
   color: #ad490d;
 }
 .match-timing small {
-  font-size: 12px;
+  display: block;
+  margin-top: 2px;
+  font-size: 10px;
   color: #737c8b;
+}
+@media (max-width: 480px) {
+  .match-timing {
+    grid-template-columns: minmax(80px, 1.2fr) repeat(4, minmax(55px, 1fr));
+    margin-inline: 12px;
+  }
+  .match-timing-item {
+    padding-inline: 5px;
+  }
+  .match-timing span {
+    gap: 2px;
+    font-size: 10px;
+  }
+  .match-timing span svg {
+    width: 11px;
+    height: 11px;
+  }
+  .match-timing strong {
+    font-size: 12px;
+  }
 }
 .round-format-settings {
   display: grid;

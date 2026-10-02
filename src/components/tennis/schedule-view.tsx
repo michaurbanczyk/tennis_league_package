@@ -42,9 +42,9 @@ export function ScheduleView({
   return (
     <>
       {view === 'schedule' && (
-        <section className="schedule-view" aria-label="Plan gier na kortach">
+        <section className="schedule-view" aria-label="Plan gier">
           <div className="results-top">
-            <h2>Plan gier na kortach</h2>
+            <h2>Plan gier</h2>
           </div>
           <p className="schedule-note">Mecze według kortów, w kolejności godzin rozpoczęcia.</p>
           {displayLoading ? (
@@ -122,7 +122,7 @@ export function ScheduleView({
                 m.players.some(Boolean),
             ) && (
               <p className="schedule-note">
-                Mecze bez przypisanego kortu lub terminu znajdziesz w zakładce „Tablica wyników”.
+                Mecze bez przypisanego kortu lub terminu znajdziesz w zakładce „Drabinki”.
               </p>
             )}
         </section>

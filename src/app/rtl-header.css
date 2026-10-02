@@ -1,9 +1,7 @@
 /* League header with access controls in the top-right corner. */
 body[data-league='relaksmisja'] .rtl-header-hero {
   position: relative;
-  background:
-    linear-gradient(90deg, #1e2d59 0%, #1e2d59 60%, #1e2d59dd 75%, #1e2d5940 100%),
-    url('/rtl-finals-banner.png') right center / 1200px auto no-repeat #1e2d59;
+  background: #1e2d59;
 }
 
 body[data-league='relaksmisja'] .rtl-header-hero .header-access-wrap {
@@ -22,14 +20,6 @@ body[data-league='relaksmisja'] .rtl-header-hero .header-access-wrap button {
 
 body[data-league='relaksmisja'] .rtl-header-hero .header-access-wrap button:hover {
   background: #1e2d59;
-}
-
-@media (min-width: 601px) {
-  body[data-league='relaksmisja'] .rtl-header-hero {
-    background-size:
-      auto,
-      1440px auto;
-  }
 }
 
 @media (max-width: 600px) {

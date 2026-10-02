@@ -18,17 +18,18 @@ export function courtEntries(board?: Config) {
   return board.courtGroups.flatMap((g) =>
     g.courts.map((id, i) => ({
       id,
-      label: `Kort nr ${i + 1}${g.name ? ' ' + g.name : ''}`,
+      label: `Kort ${i + 1}${g.name ? ' ' + g.name : ''}`,
       groupId: g.id,
     })),
   );
 }
 export function courtNumber(value: string, board?: Config): string {
   if (!board?.courtGroups) return legacyNumber(value);
+  const label = value.replace(/^Kort\s+nr\s+/i, 'Kort ');
   return (
     courtEntries(board).find(
       (c) =>
-        c.id === value || c.label.toLocaleLowerCase('pl-PL') === value.toLocaleLowerCase('pl-PL'),
+        c.id === value || c.label.toLocaleLowerCase('pl-PL') === label.toLocaleLowerCase('pl-PL'),
     )?.id || ''
   );
 }

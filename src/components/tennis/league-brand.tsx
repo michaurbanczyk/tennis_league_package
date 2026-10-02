@@ -9,7 +9,12 @@ export function LeagueBrand({ theme }: { theme?: LeagueTheme }) {
           <span className="rtl-brand-divider" aria-hidden="true" />
           <span className="rtl-wordmark">
             <span className="rtl-wordmark-title">RTL FINALS</span>
-            <span className="rtl-wordmark-tagline">mecze, które znaczą więcej</span>
+            <span className="rtl-wordmark-tagline" aria-label="mecze, które znaczą więcej">
+              <span aria-hidden="true">
+                mecze, które znacz<span className="rtl-wordmark-ogonek">a</span> wi
+                <span className="rtl-wordmark-ogonek">e</span>cej
+              </span>
+            </span>
           </span>
         </>
       ) : (

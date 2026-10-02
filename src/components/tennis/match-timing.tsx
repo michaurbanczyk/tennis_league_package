@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import type { Match } from '@/lib/tennis';
+import { CalendarDays, Clock3, Flag, Play, Timer } from 'lucide-react';
+import { dateLabel, type Match } from '@/lib/tennis';
 import {
   actualStart,
   durationLabel,
@@ -60,26 +61,40 @@ export function MatchTiming({
       </div>
     );
   return (
-    <div className="match-timing" aria-label="Czas meczu">
-      <div>
-        <span>Planowany start</span>
+    <div className="match-timing" aria-label="Terminy meczu">
+      <div className="match-timing-item">
+        <span title="Data meczu">
+          <CalendarDays aria-hidden="true" size={13} /> Data
+        </span>
+        <strong>{m.date ? dateLabel(m.date) : 'Do ustalenia'}</strong>
+      </div>
+      <div className="match-timing-item">
+        <span title="Planowany start">
+          <Clock3 aria-hidden="true" size={13} /> Plan
+        </span>
         <strong>{m.time || '—'}</strong>
       </div>
-      <div>
-        <span>Faktyczny start</span>
+      <div className="match-timing-item">
+        <span title="Faktyczny start">
+          <Play aria-hidden="true" size={13} /> Start
+        </span>
         <strong>{start === null ? '—' : localMatchTime(start)}</strong>
         {start !== null && m.date && localMatchDate(start) !== m.date && (
           <small>{localMatchDate(start)}</small>
         )}
       </div>
-      <div>
-        <span>Czas trwania{m.status === 'unfinished' ? ' · przerwany' : ''}</span>
+      <div className="match-timing-item">
+        <span title={m.status === 'unfinished' ? 'Czas trwania · przerwany' : 'Czas trwania'}>
+          <Timer aria-hidden="true" size={13} /> Czas
+        </span>
         <strong className="match-duration">
           {elapsed === null ? '—' : durationLabel(elapsed, m.status === 'live')}
         </strong>
       </div>
-      <div>
-        <span>Zakończenie</span>
+      <div className="match-timing-item">
+        <span title="Zakończenie">
+          <Flag aria-hidden="true" size={13} /> Koniec
+        </span>
         <strong>{m.status === 'finished' ? m.finishedTime || '—' : '—'}</strong>
         {end && start !== null && localMatchDate(end) !== localMatchDate(start) ? (
           <small>{localMatchDate(end)}</small>

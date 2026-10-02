@@ -34,6 +34,7 @@
   line-height: 1.12;
   letter-spacing: -0.035em;
   text-shadow: 0 2px 8px #00000050;
+  max-width: 100%;
 }
 
 .finals-photo-kicker,
@@ -56,6 +57,34 @@
   overflow-wrap: anywhere;
 }
 
+.finals-photo-kicker,
+.finals-photo-name {
+  overflow-wrap: anywhere;
+}
+
+.hero-banner-settings form {
+  padding: 16px 0 22px;
+}
+
+.hero-banner-fields {
+  display: grid;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.hero-banner-field {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr) 140px 86px;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.hero-banner-field input {
+  min-width: 0;
+  width: 100%;
+}
+
 body[data-league='relaksmisja'] .main-wrap.finals-main {
   padding-top: 12px;
 }
@@ -70,6 +99,17 @@ body[data-league='relaksmisja'] .main-wrap.finals-main {
 }
 
 @media (max-width: 600px) {
+  .hero-banner-field {
+    grid-template-columns: minmax(0, 1fr) 90px;
+  }
+
+  .hero-banner-field label:first-child,
+  .hero-banner-field input[name='kicker'],
+  .hero-banner-field input[name='name'],
+  .hero-banner-field input[name='season'] {
+    grid-column: 1 / -1;
+  }
+
   .finals-photo-heading {
     background-image:
       linear-gradient(90deg, #00000075, #00000020), url('/relaksmisja-finals-header-sunset.png');

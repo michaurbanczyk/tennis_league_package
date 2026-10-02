@@ -13,6 +13,7 @@ import {
   type Board,
 } from './tennis';
 import { normalizeYoutubeUrl } from './youtube';
+import { heroBannerSchema } from './hero-banner';
 
 export const BACKUP_MAX_BYTES = 10 * 1024 * 1024;
 const headers = { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' };
@@ -106,6 +107,7 @@ const match = score.extend({
 const boardSchema = z.object({
   theme: z.literal(SITE_LEAGUE).optional(),
   season: z.string().max(60).nullable().optional(),
+  heroBanner: heroBannerSchema.optional(),
   finalsDates: z
     .array(date)
     .max(LEAGUE_FEATURES.bracketEditor ? 31 : 4)

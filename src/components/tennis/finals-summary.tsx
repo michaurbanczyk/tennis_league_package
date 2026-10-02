@@ -68,10 +68,10 @@ export function FinalsSummary({ board }: { board: Board }) {
     s = stats.total;
   const frequent = s.frequent.join(' / ') || '—';
   return (
-    <section className="finals-summary" aria-label="Finały w liczbach">
+    <section className="finals-summary" aria-label="Statystyki">
       <div className="results-top">
         <div>
-          <h2>Statystyki z finałów</h2>
+          <h2>Statystyki</h2>
           <p className="finals-subtitle">Aktualizowane na bieżąco</p>
         </div>
       </div>
@@ -152,7 +152,7 @@ export function FinalsSummary({ board }: { board: Board }) {
         </div>
       </section>
       <section className="finals-section" aria-labelledby="finals-levels">
-        <h3 id="finals-levels">Statystyki z finałów – według poziomu</h3>
+        <h3 id="finals-levels">Statystyki według poziomu</h3>
         <div className="finals-levels">
           {stats.levels.map((l) => (
             <article className="match-card finals-level" key={l.id}>

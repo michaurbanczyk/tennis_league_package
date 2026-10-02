@@ -1,4 +1,12 @@
 /* Brand settings apply to the whole page, including portalled match dialogs. */
+@font-face {
+  font-family: 'Bradley Hand ITC TT';
+  src: url('/fonts/bradley-hand/bradley-hand-itc-tt-bold.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
 .theme-settings {
   margin: 0 0 28px;
   padding: 20px;
@@ -170,14 +178,28 @@ body[data-league='relaksmisja'] .rtl-wordmark-title {
 }
 body[data-league='relaksmisja'] .rtl-wordmark-tagline {
   display: block;
-  font-family: Arial, sans-serif;
-  font-size: 12px;
+  font-family: 'Bradley Hand ITC TT', 'Segoe Print', cursive;
+  font-size: 15px;
   line-height: 1.4;
-  font-weight: 400;
-  font-style: italic;
-  letter-spacing: 0.45px;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
   white-space: nowrap;
   color: #fff;
+}
+.rtl-wordmark-ogonek {
+  position: relative;
+  display: inline-block;
+}
+.rtl-wordmark-ogonek::after {
+  content: '˛';
+  position: absolute;
+  left: 0.42em;
+  top: 0.7em;
+  font: inherit;
+  font-size: 0.72em;
+  line-height: 1;
+  pointer-events: none;
 }
 body[data-league='relaksmisja'] .header-actions {
   gap: 10px;
@@ -452,7 +474,7 @@ body[data-league='relaksmisja'] .tv-match-description h3.tv-final-title {
     letter-spacing: 0.5px;
   }
   body[data-league='relaksmisja'] .rtl-wordmark-tagline {
-    font-size: 11px;
+    font-size: 13px;
     letter-spacing: 0;
   }
   body[data-league='relaksmisja'] .header-actions {
@@ -607,14 +629,44 @@ body[data-league='relaksmisja'] .season-form > .season-name-field {
 .referee-code-caption {
   margin-top: 12px;
 }
+.match-format-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 2px 18px 14px;
+  white-space: nowrap;
+}
+.match-format-row .match-format-label {
+  margin: 0;
+}
 .referee-card-label {
   display: flex;
   align-items: center;
   gap: 5px;
-  padding: 0 19px;
   font-size: 12px;
   color: #64748a;
-  margin-top: 14px;
+}
+@media (max-width: 420px) {
+  .match-format-row {
+    gap: 6px;
+    margin-right: 12px;
+    margin-left: 12px;
+  }
+  .match-format-row .match-format-label,
+  .match-format-row .referee-card-label {
+    font-size: 11px;
+  }
+}
+@media (max-width: 360px) {
+  .match-format-row {
+    gap: 4px;
+    margin-right: 10px;
+    margin-left: 10px;
+  }
+  .match-format-row .match-format-label,
+  .match-format-row .referee-card-label {
+    font-size: 10px;
+  }
 }
 .point-scored .numbers,
 .point-scored .score-labels > div {

@@ -55,6 +55,7 @@ export type Board = {
   levels: Level[];
   courtGroups?: import('./court-config').CourtGroup[];
   season?: string | null;
+  heroBanner?: import('./hero-banner').HeroBanner;
   finalsDates?: string[];
   theme?: import('./league-theme').LeagueTheme;
 };

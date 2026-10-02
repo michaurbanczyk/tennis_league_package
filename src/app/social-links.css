@@ -1,0 +1,93 @@
+body[data-league='relaksmisja'] .rtl-header-hero .header-access-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+.header-social-links {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-right: 4px;
+}
+
+.header-social-link {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 6px;
+  background: #ffffff12;
+}
+
+.header-social-link img {
+  display: block;
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+}
+
+a.header-social-link:hover {
+  background: #ffffff2a;
+  transform: translateY(-1px);
+}
+
+a.header-social-link:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.header-social-link-unset {
+  opacity: 0.5;
+}
+
+.social-link-settings form {
+  padding: 16px 0 22px;
+}
+
+.social-link-settings form > p:first-child {
+  margin: 0 0 16px;
+  color: #656b74;
+  font-size: 13px;
+}
+
+.social-link-fields {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.social-link-fields label {
+  display: grid;
+  grid-template-columns: 32px 110px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.social-link-fields label img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.social-link-fields input {
+  min-width: 0;
+  width: 100%;
+}
+
+@media (max-width: 600px) {
+  .header-social-links {
+    padding-right: 0;
+  }
+
+  .social-link-fields label {
+    grid-template-columns: 28px minmax(0, 1fr);
+  }
+
+  .social-link-fields input {
+    grid-column: 1 / -1;
+  }
+}

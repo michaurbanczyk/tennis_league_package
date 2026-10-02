@@ -1,7 +1,7 @@
 // Stable IDs keep existing courts 1–5 assigned to FAME.
 export const COURTS = Array.from({ length: 9 }, (_, i) => ({
   id: String(i + 1),
-  label: `Kort nr ${i < 6 ? i + 1 : i - 5} ${i < 6 ? 'FAME' : 'FLEX'}`,
+  label: `Kort ${i < 6 ? i + 1 : i - 5} ${i < 6 ? 'FAME' : 'FLEX'}`,
 }));
 export const FINALS_DATE_LABELS = [
   'Weekend 1 · dzień 1',
@@ -10,8 +10,9 @@ export const FINALS_DATE_LABELS = [
   'Weekend 2 · dzień 2',
 ];
 export function courtNumber(value: string): string {
-  const exact = COURTS.find((c) => c.id === value || c.label.toLowerCase() === value.toLowerCase());
-  return exact?.id || value.match(/^Kort\s*([1-9])$/i)?.[1] || '';
+  const label = value.replace(/^Kort\s+nr\s+/i, 'Kort ');
+  const exact = COURTS.find((c) => c.id === value || c.label.toLowerCase() === label.toLowerCase());
+  return exact?.id || label.match(/^Kort\s*([1-9])$/i)?.[1] || '';
 }
 export function courtLabel(value: string): string {
   return COURTS.find((c) => c.id === courtNumber(value))?.label || 'Kort: do ustalenia';

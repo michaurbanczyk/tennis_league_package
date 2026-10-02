@@ -52,7 +52,7 @@ export function ResultsView({
         <>
           <div className="results-top">
             <h2>
-              Tablica wyników <span>{isDemo ? 'Podgląd' : resultMatchCount + ' meczów'}</span>
+              Drabinki <span>{isDemo ? 'Podgląd' : resultMatchCount + ' meczów'}</span>
             </h2>
             <button className="text-button" onClick={() => copy(window.location.origin)}>
               <Copy size={16} />

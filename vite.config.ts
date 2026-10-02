@@ -56,7 +56,12 @@ export default defineConfig(async () => {
   return {
     server: {
       ...(managedLinux ? { host: '0.0.0.0', allowedHosts: ['terminal.local'] } : {}),
-      ...(isCodexSeatbeltSandbox ? { watch: { useFsEvents: false, usePolling: true } } : {}),
+      watch: {
+        // These static icons need no HMR. Windows fs.watch can throw EBUSY for
+        // an image held open by another application.
+        ignored: ['**/public/social/**', '**/.sites-runtime/**'],
+        ...(isCodexSeatbeltSandbox ? { useFsEvents: false, usePolling: true } : {}),
+      },
     },
     plugins: [
       vinext(),

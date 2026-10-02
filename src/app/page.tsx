@@ -1,6 +1,7 @@
 'use client';
 import './finals-photo.css';
 import './rtl-header.css';
+import './social-links.css';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { AccessCodeForm } from '@/components/tennis/access-code-form';
 import { ScoreEditor } from '@/components/tennis/score-editor';
@@ -13,19 +14,19 @@ import { LeagueBrand } from '@/components/tennis/league-brand';
 import { SITE_LEAGUE } from '@/lib/site-league';
 import { BracketSetup } from '@/components/tennis/bracket-setup';
 import { RefereeSettings } from '@/components/tennis/referee';
+import { RefereeWhistleIcon } from '@/components/tennis/referee-whistle-icon';
 import { TvView } from '@/components/tennis/tv-view';
 import {
-  Activity,
   ArrowUpRight,
   Check,
-  CheckCheck,
   ChevronRight,
   Copy,
-  KeyRound,
   Loader2,
   Plus,
   RefreshCw,
+  Settings2,
   ShieldCheck,
+  SquarePen,
   Trophy,
   Undo2,
   WifiOff,
@@ -43,6 +44,9 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Toaster, toast } from 'sonner';
 import { Sponsors } from '@/components/tennis/sponsors';
+import { SocialLinks, SocialLinkSettings } from '@/components/tennis/social-links';
+import { HeroBannerSettings } from '@/components/tennis/hero-banner-settings';
+import { resolveHeroBanner } from '@/lib/hero-banner';
 import { localMatchDate } from '@/lib/match-timing';
 import { FinalsSummary } from '@/components/tennis/finals-summary';
 import { Announcements } from '@/components/tennis/announcements';
@@ -293,6 +297,7 @@ export default function Home() {
     : isDemo
       ? demoBoard
       : data;
+  const heroBanner = resolveHeroBanner(board);
   const levelNames = data.levels.map((l) => l.name);
   const isOrganizer = data.scope === 'admin',
     admin = isOrganizer && !archived,
@@ -329,8 +334,6 @@ export default function Home() {
   const level = board.levels.find((l) => l.matches.some((m) => m.id === selected));
   const match = level?.matches.find((m) => m.id === selected);
   const all = board.levels.flatMap((l) => l.matches);
-  const live = all.filter((m) => m.status === 'live').length;
-  const finished = all.filter((m) => m.status === 'finished').length;
   function open(type: Modal, id?: string) {
     if (type === 'reset-league') setResetRevision(ref.current.revision);
     if (type === 'create') {
@@ -566,7 +569,7 @@ export default function Home() {
                       : open('login')
                   }
                 >
-                  <KeyRound size={17} />
+                  <SquarePen size={17} aria-hidden="true" />
                   <span>{data.scope && data.scope !== 'admin' ? 'Mój mecz' : 'Wpisz wynik'}</span>
                 </button>
               )}
@@ -574,17 +577,19 @@ export default function Home() {
                 className="footer-organizer"
                 onClick={() => (isOrganizer ? post('logout') : open('admin'))}
               >
-                <ShieldCheck size={16} aria-hidden="true" />
+                <Settings2 size={17} aria-hidden="true" />
                 <span>{isOrganizer ? 'Wyloguj organizatora' : 'Organizator'}</span>
               </button>
               {isRtl &&
                 !archived &&
                 data.levels.some((l) => l.matches.some((m) => m.refereeEnabled)) && (
                   <button className="footer-referee" onClick={() => open('referee-login')}>
-                    <ShieldCheck size={16} aria-hidden="true" /> Sędzia
+                    <RefereeWhistleIcon />
+                    Sędzia
                   </button>
                 )}
             </div>
+            {isRtl && <SocialLinks />}
           </div>
           <div className="header-inner">
             <a className="brand" href="/" aria-label={brand.name + ' — strona główna'}>
@@ -609,12 +614,12 @@ export default function Home() {
               className="brand-navigation page-tabs"
             >
               <TabsList aria-label="Widok strony">
-                <TabsTrigger value="results">TABLICA WYNIKÓW</TabsTrigger>
-                <TabsTrigger value="schedule">PLAN GIER NA KORTACH</TabsTrigger>
+                <TabsTrigger value="results">DRABINKI</TabsTrigger>
+                <TabsTrigger value="schedule">PLAN GIER</TabsTrigger>
                 <TabsTrigger value="live" disabled={archived}>
                   WYNIKI NA ŻYWO
                 </TabsTrigger>
-                <TabsTrigger value="summary">FINAŁY W LICZBACH</TabsTrigger>
+                <TabsTrigger value="summary">STATYSTYKI</TabsTrigger>
                 <TabsTrigger value="announcements">KOMUNIKATY</TabsTrigger>
               </TabsList>
             </Tabs>
@@ -625,9 +630,21 @@ export default function Home() {
         <section className="finals-photo-heading" aria-labelledby="finals-photo-title">
           <div className="finals-photo-inner">
             <h1 id="finals-photo-title">
-              <span className="finals-photo-kicker">Finały</span>
-              <span className="finals-photo-name">Tennis League</span>
-              {board.season && <span className="finals-photo-season">{board.season}</span>}
+              {heroBanner.kicker && (
+                <span className="finals-photo-kicker" style={{ fontSize: `min(${heroBanner.kickerSize}px, 5.5vw)` }}>
+                  {heroBanner.kicker}
+                </span>
+              )}
+              {heroBanner.name && (
+                <span className="finals-photo-name" style={{ fontSize: `min(${heroBanner.nameSize}px, 7vw)` }}>
+                  {heroBanner.name}
+                </span>
+              )}
+              {heroBanner.season && (
+                <span className="finals-photo-season" style={{ fontSize: `min(${heroBanner.seasonSize}px, 5.5vw)` }}>
+                  {heroBanner.season}
+                </span>
+              )}
             </h1>
           </div>
         </section>
@@ -776,7 +793,11 @@ export default function Home() {
                     const f = new FormData(e.currentTarget);
                     if (
                       await post('season', {
-                        season: customSeason ? seasonText : seasonYear + '/' + seasonNumber,
+                        season: isRtl
+                          ? data.season || heroBanner.season
+                          : customSeason
+                            ? seasonText
+                            : seasonYear + '/' + seasonNumber,
                         ...readSeasonFields(f),
                       })
                     ) {
@@ -785,7 +806,13 @@ export default function Home() {
                     }
                   }}
                 >
-                  {customSeason ? (
+                  {isRtl ? (
+                    !data.season && (
+                      <p className="settings-date-note">
+                        Najpierw wpisz nazwę sezonu w dolnym wierszu sekcji „Tekst na banerze”.
+                      </p>
+                    )
+                  ) : customSeason ? (
                     <label className="season-name-field">
                       Nazwa sezonu
                       <input
@@ -832,13 +859,25 @@ export default function Home() {
                     board={data}
                     busy={busy}
                   />
-                  <button className="button dark" disabled={busy}>
+                  <button className="button dark" disabled={busy || (isRtl && !data.season)}>
                     <Check size={17} /> Zapisz ustawienia finałów
                   </button>
                 </form>
                 <p className="settings-date-note">Te ustawienia dotyczą bieżących finałów.</p>
               </CollapsibleContent>
             </Collapsible>
+            {isRtl && (
+              <HeroBannerSettings
+                board={data}
+                busy={busy}
+                onSave={async (banner) => {
+                  const saved = await post('hero_banner', { heroBanner: banner });
+                  if (saved) toast.success('Zapisano tekst banera.');
+                  return Boolean(saved);
+                }}
+              />
+            )}
+            <SocialLinkSettings />
             <Collapsible className="season-management">
               <CollapsibleTrigger className="season-management-trigger">
                 <span>Zarządzanie sezonami</span>
@@ -906,38 +945,6 @@ export default function Home() {
             )}
           </div>
         )}
-        {view !== 'summary' && (
-          <section className="overview" aria-label="Podsumowanie">
-            <div>
-              <span className="overview-icon green">
-                <Activity size={21} />
-              </span>
-              <strong>{displayLoading ? '–' : live.toString().padStart(2, '0')}</strong>
-              <span>W grze</span>
-            </div>
-            <div>
-              <span className="overview-icon">
-                <CheckCheck size={21} />
-              </span>
-              <strong>{displayLoading ? '–' : finished.toString().padStart(2, '0')}</strong>
-              <span>Zakończone</span>
-            </div>
-            <div>
-              <span className="overview-icon">
-                <Trophy size={21} />
-              </span>
-              <strong>
-                {displayLoading ? '–' : resultLevels.length.toString().padStart(2, '0')}
-              </strong>
-              <span>{resultLevels.length === 1 ? 'Poziom' : 'Poziomy'}</span>
-            </div>
-            <p>
-              Od pierwszego serwisu
-              <br />
-              <strong>do ostatniej piłki.</strong>
-            </p>
-          </section>
-        )}
         <ResultsView
           view={view}
           board={board}
@@ -990,7 +997,7 @@ export default function Home() {
         {!archived && (
           <section className="courtside">
             <div className="courtside-icon">
-              <KeyRound size={24} />
+              <SquarePen size={24} aria-hidden="true" />
             </div>
             <div>
               <h3>Jesteś na korcie?</h3>
@@ -1002,8 +1009,18 @@ export default function Home() {
           </section>
         )}
         <footer className="site-footer">
-          <span className="footer-brand">
-            {brand.name} <span>/</span> wyniki na żywo
+          <span className={`footer-brand${isRtl ? ' footer-brand-powered' : ''}`}>
+            {brand.name} <span className="footer-divider">/</span>{' '}
+            {isRtl ? (
+              <span className="footer-powered">
+                powered by:
+                <a href="https://appscore.pl" target="_blank" rel="noopener noreferrer" aria-label="AppScore — otwórz stronę">
+                  <img src="/appscore-logo.png" alt="AppScore" width={170} height={40} />
+                </a>
+              </span>
+            ) : (
+              'wyniki na żywo'
+            )}
           </span>
           <div className="footer-tools">
             <span>
