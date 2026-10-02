@@ -63,12 +63,7 @@ export function matchElapsed(m: Match, now = Date.now()): number | null {
         : Math.min(now, Date.parse(m.startedAt || '') + 12 * 3600000);
   return Number.isFinite(end) && end >= start ? end - start : null;
 }
-export function durationLabel(ms: number, live = false) {
-  const seconds = Math.floor(ms / 1000);
-  if (live)
-    return [Math.floor(seconds / 3600), Math.floor(seconds / 60) % 60, seconds % 60]
-      .map((n) => String(n).padStart(2, '0'))
-      .join(':');
-  const min = Math.floor(seconds / 60);
-  return (min >= 60 ? Math.floor(min / 60) + ' godz. ' : '') + (min % 60) + ' min';
+export function durationLabel(ms: number) {
+  const minutes = Math.floor(ms / 60000);
+  return [Math.floor(minutes / 60), minutes % 60].map((n) => String(n).padStart(2, '0')).join(':');
 }

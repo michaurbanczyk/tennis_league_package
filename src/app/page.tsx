@@ -962,7 +962,6 @@ export default function Home() {
           isDemo={isDemo}
           archiveId={selectedArchive}
           resultMatchCount={resultMatchCount}
-          copy={copy}
           activeLevelFilter={activeLevelFilter}
           setFilter={setFilter}
           resultLevels={resultLevels}
@@ -1003,20 +1002,6 @@ export default function Home() {
           setView={setView}
           liveCourtList={liveCourtList}
         />
-        {!archived && (
-          <section className="courtside">
-            <div className="courtside-icon">
-              <SquarePen size={24} aria-hidden="true" />
-            </div>
-            <div>
-              <h3>Jesteś na korcie?</h3>
-              <p>Wpisz kod od organizatora, rozpocznij mecz i aktualizuj wynik po każdym gemie.</p>
-            </div>
-            <button className="button outline" onClick={() => open('login')}>
-              Mam kod do meczu <ChevronRight size={17} />
-            </button>
-          </section>
-        )}
         <footer className="site-footer">
           <span className={`footer-brand${isRtl ? ' footer-brand-powered' : ''}`}>
             {brand.name} <span className="footer-divider">/</span>{' '}
@@ -1036,15 +1021,11 @@ export default function Home() {
               'wyniki na żywo'
             )}
           </span>
-          <div className="footer-tools">
-            <span>
-              {archived
-                ? 'Archiwum · tylko podgląd'
-                : lastSync
-                  ? `Ostatnie połączenie: ${lastSync.toLocaleTimeString('pl-PL', { timeZone: 'Europe/Warsaw' })}`
-                  : 'Oczekiwanie na połączenie'}
-            </span>
-          </div>
+          {(archived || !lastSync) && (
+            <div className="footer-tools">
+              <span>{archived ? 'Archiwum · tylko podgląd' : 'Oczekiwanie na połączenie'}</span>
+            </div>
+          )}
         </footer>
         <Sponsors />
       </main>
@@ -1310,11 +1291,7 @@ export default function Home() {
                       <button
                         className="icon-button"
                         aria-label={'Kopiuj kod ' + m?.stage}
-                        onClick={() =>
-                          copy(
-                            `${window.location.origin}\n${l?.name} · ${m?.stage}\nKod meczu: ${c}`,
-                          )
-                        }
+                        onClick={() => copy(`${l?.name} · ${m?.stage}\nKod meczu: ${c}`)}
                       >
                         <Copy size={18} />
                       </button>
@@ -1328,9 +1305,7 @@ export default function Home() {
                             className="icon-button"
                             aria-label={'Kopiuj kod sędziego ' + m.stage}
                             onClick={() =>
-                              copy(
-                                `${window.location.origin}\n${l?.name} · ${m.stage}\nKod sędziego: ${m.refereeCurrentCode}`,
-                              )
+                              copy(`${l?.name} · ${m.stage}\nKod sędziego: ${m.refereeCurrentCode}`)
                             }
                           >
                             <Copy size={18} />

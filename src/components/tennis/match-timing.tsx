@@ -42,17 +42,14 @@ export function MatchTiming({
         <div className="tv-time-details">
           {m.time && (
             <div>
-              <span>Plan</span>
+              <span>Planowany start</span>
               <strong>{m.time}</strong>
             </div>
           )}
           <div>
-            <span>Start</span>
+            <span>Godzina rozpoczęcia</span>
             <strong>{start === null ? '—' : localMatchTime(start)}</strong>
           </div>
-          {start !== null && m.date && localMatchDate(start) !== m.date && (
-            <small>Rozpoczęto {localMatchDate(start)}</small>
-          )}
         </div>
         <div className="tv-time-duration">
           <span>Trwa</span>
@@ -88,7 +85,7 @@ export function MatchTiming({
           <Timer aria-hidden="true" size={13} /> Czas
         </span>
         <strong className="match-duration">
-          {elapsed === null ? '—' : durationLabel(elapsed, m.status === 'live')}
+          {elapsed === null ? '—' : durationLabel(elapsed)}
         </strong>
       </div>
       <div className="match-timing-item">

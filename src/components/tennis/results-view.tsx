@@ -1,4 +1,4 @@
-import { ChevronRight, Copy, Plus, Trophy } from 'lucide-react';
+import { ChevronRight, Plus, Trophy } from 'lucide-react';
 import { HorizontalBracket } from '@/components/tennis/horizontal-bracket';
 import { BracketPdfButton } from '@/components/tennis/bracket-pdf-button';
 import { MatchCard, type MatchCardProps } from '@/components/tennis/match-card';
@@ -29,7 +29,6 @@ export function ResultsView({
   isDemo,
   archiveId,
   resultMatchCount,
-  copy,
   activeLevelFilter,
   setFilter,
   resultLevels,
@@ -39,7 +38,6 @@ export function ResultsView({
   isDemo: boolean;
   archiveId?: string;
   resultMatchCount: number;
-  copy: (value: string) => void;
   activeLevelFilter: string;
   setFilter: (value: string) => void;
   resultLevels: Level[];
@@ -54,10 +52,6 @@ export function ResultsView({
             <h2>
               Drabinki <span>{isDemo ? 'Podgląd' : resultMatchCount + ' meczów'}</span>
             </h2>
-            <button className="text-button" onClick={() => copy(window.location.origin)}>
-              <Copy size={16} />
-              <span>Udostępnij link</span>
-            </button>
           </div>
           <Tabs value={activeLevelFilter} onValueChange={setFilter} className="level-tabs">
             <TabsList aria-label="Poziom rozgrywek">
