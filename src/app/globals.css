@@ -766,44 +766,6 @@ h1 > span {
   flex: 0 0 45px;
   border-left: 1px solid #e5ecdf;
 }
-.courtside {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 24px 25px;
-  background: #eaf0e7;
-  border: 1px solid #dfe7d9;
-  border-radius: 11px;
-  margin-top: 48px;
-}
-.courtside-icon {
-  height: 47px;
-  width: 47px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #dfe9d7;
-  color: #51733d;
-  border-radius: 11px;
-}
-.courtside h3 {
-  font-size: 16px;
-  margin: 0 0 6px;
-  font-weight: 600;
-}
-.courtside p {
-  font-size: 13px;
-  margin: 0;
-  color: #718267;
-}
-.courtside > .button {
-  margin-left: auto;
-  flex-shrink: 0;
-}
-.courtside .outline {
-  border-color: #cbd9be;
-  font-size: 13px;
-}
 footer {
   display: flex;
   align-items: center;
