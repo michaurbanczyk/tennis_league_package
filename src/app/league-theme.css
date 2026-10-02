@@ -324,10 +324,6 @@ body[data-league='relaksmisja'] .current-code-value code,
 body[data-league='relaksmisja'] .code-card code {
   color: #8c3a08;
 }
-body[data-league='relaksmisja'] .courtside-icon {
-  background: #fff2e8;
-  color: #b44e0b;
-}
 body[data-league='relaksmisja'] .final-card {
   border-color: #b5d4e8;
   box-shadow: 0 5px 20px #24425412;

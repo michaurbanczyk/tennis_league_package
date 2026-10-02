@@ -1338,31 +1338,6 @@ legend {
   .final .round-title {
     justify-content: flex-start;
   }
-  .courtside {
-    margin-top: 30px;
-    padding: 20px;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-  .courtside-icon {
-    width: 37px;
-    height: 37px;
-    border-radius: 9px;
-  }
-  .courtside > div:nth-child(2) {
-    flex: 1;
-  }
-  .courtside h3 {
-    font-size: 15px;
-  }
-  .courtside p {
-    font-size: 12px;
-    line-height: 1.6;
-  }
-  .courtside > .button {
-    margin: 5px 0 0;
-    width: 100%;
-  }
   footer {
     font-size: 10px;
     align-items: flex-start;
@@ -1897,26 +1872,6 @@ body {
 .bracket-arrow {
   color: #b5b5b5;
 }
-.courtside {
-  background: #f7f7f7;
-  border-color: #eeeeee;
-  border-radius: 5px;
-}
-.courtside-icon {
-  background: #eaf3df;
-  color: #80b344;
-  border-radius: 50%;
-}
-.courtside h3 {
-  color: #333;
-  font-weight: 500;
-}
-.courtside p {
-  color: #797979;
-}
-.courtside .outline {
-  border-color: #d6d6d6;
-}
 footer {
   border-top: 1px solid #eee;
   margin-top: 26px;
@@ -2156,9 +2111,6 @@ footer {
   }
   .app-dialog [data-slot='dialog-title'] {
     font-size: 23px;
-  }
-  .courtside p {
-    font-size: 13px;
   }
   footer {
     font-size: 12px;
@@ -4867,7 +4819,7 @@ body[data-league='relaksmisja'] .tv-brand-logos img.custom-banner-header {
   padding: 0 9px;
   border-left: 1px solid #e6e9ed;
 }
-.match-timing-item:first-child {
+boards .match-timing-item:first-child {
   padding-left: 0;
   border-left: 0;
 }
