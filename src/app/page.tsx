@@ -631,17 +631,26 @@ export default function Home() {
           <div className="finals-photo-inner">
             <h1 id="finals-photo-title">
               {heroBanner.kicker && (
-                <span className="finals-photo-kicker" style={{ fontSize: `min(${heroBanner.kickerSize}px, 5.5vw)` }}>
+                <span
+                  className="finals-photo-kicker"
+                  style={{ fontSize: `min(${heroBanner.kickerSize}px, 5.5vw)` }}
+                >
                   {heroBanner.kicker}
                 </span>
               )}
               {heroBanner.name && (
-                <span className="finals-photo-name" style={{ fontSize: `min(${heroBanner.nameSize}px, 7vw)` }}>
+                <span
+                  className="finals-photo-name"
+                  style={{ fontSize: `min(${heroBanner.nameSize}px, 7vw)` }}
+                >
                   {heroBanner.name}
                 </span>
               )}
               {heroBanner.season && (
-                <span className="finals-photo-season" style={{ fontSize: `min(${heroBanner.seasonSize}px, 5.5vw)` }}>
+                <span
+                  className="finals-photo-season"
+                  style={{ fontSize: `min(${heroBanner.seasonSize}px, 5.5vw)` }}
+                >
                   {heroBanner.season}
                 </span>
               )}
@@ -1014,7 +1023,12 @@ export default function Home() {
             {isRtl ? (
               <span className="footer-powered">
                 powered by:
-                <a href="https://appscore.pl" target="_blank" rel="noopener noreferrer" aria-label="AppScore — otwórz stronę">
+                <a
+                  href="https://appscore.pl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="AppScore — otwórz stronę"
+                >
                   <img src="/appscore-logo.png" alt="AppScore" width={170} height={40} />
                 </a>
               </span>

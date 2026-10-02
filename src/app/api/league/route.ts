@@ -688,12 +688,13 @@ async function handlePost(req: Request, retry: number): Promise<Response> {
       if (SITE_LEAGUE !== 'relaksmisja')
         return json({ error: 'Ta liga nie ma edytowalnego banera.' }, 400);
       const banner = heroBannerSchema.safeParse(body.heroBanner);
-      if (!banner.success)
-        return json({ error: 'Sprawdź tekst i rozmiary czcionek banera.' }, 400);
+      if (!banner.success) return json({ error: 'Sprawdź tekst i rozmiary czcionek banera.' }, 400);
       const bannerSeason = validateSiteSeason(banner.data.season);
       if (
         seasonKey(bannerSeason) !== seasonKey(board.season || '') &&
-        (await archives()).some((archive: any) => seasonKey(archive.season) === seasonKey(bannerSeason))
+        (await archives()).some(
+          (archive: any) => seasonKey(archive.season) === seasonKey(bannerSeason),
+        )
       )
         throw Error('Ten sezon jest już w archiwum.');
       board.season = bannerSeason;
@@ -703,8 +704,7 @@ async function handlePost(req: Request, retry: number): Promise<Response> {
       const season = validateSiteSeason(body.season);
       if ((await archives()).some((a: any) => seasonKey(a.season) === seasonKey(season)))
         throw Error('Ten sezon jest już w archiwum.');
-      if (SITE_LEAGUE === 'relaksmisja' && board.heroBanner)
-        board.heroBanner.season = season;
+      if (SITE_LEAGUE === 'relaksmisja' && board.heroBanner) board.heroBanner.season = season;
       board.season = season;
       if (body.finalsDates !== undefined) {
         const dates = finalsDates(body.finalsDates, validDate);
