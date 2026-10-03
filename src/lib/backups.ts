@@ -3,6 +3,8 @@ import { validateCourtGroups } from './court-config';
 import { normalizeLevelName, levelNameKey, MAX_LEVELS } from './level-settings';
 import { z } from 'zod';
 import { database } from '@/db/raw';
+import { matchRowSyncStatements } from './match-row-sync';
+import { readNormalizedBoard } from './normalized-board';
 import { SITE_LEAGUE, LEAGUE_FEATURES } from './site-league';
 import {
   validateLevelSeeds,
@@ -215,6 +217,10 @@ export async function exportBackup(mode: string) {
     id: recovery ? row.id.slice('recovery:'.length) : row.id,
     data: JSON.parse(row.data),
   }));
+  if (records.some((record) => record.id === 'main')) {
+    const storedMain = await readNormalizedBoard(recovery ? 'recovery:main' : 'main');
+    if (storedMain.board) records.find((record) => record.id === 'main')!.data = storedMain.board;
+  }
   if (!records.some((r) => r.id === 'main')) {
     if (recovery)
       return Response.json(
@@ -299,6 +305,7 @@ export async function restoreBackup(
     db = database(),
     token = crypto.randomUUID();
   const next = { ...backup.records.find((r) => r.id === 'main')!.data, restoreToken: token };
+  const serializedNext = JSON.stringify(next);
   // Every statement is guarded. D1 executes the whole batch atomically; a stale
   // revision cannot replace archives, recovery copies, sessions, or the main board.
   const before = exists
@@ -308,6 +315,7 @@ export async function restoreBackup(
   const after =
     "EXISTS (SELECT 1 FROM boards WHERE id='main' AND revision=? AND json_extract(data,'$.restoreToken')=?)";
   const afterArgs = [revision + 1, token];
+  const mainSaveIndex = exists ? 4 : 2;
   const statements = [
     db.prepare(`DELETE FROM boards WHERE id LIKE 'recovery:%' AND ${before}`).bind(...beforeArgs),
     exists
@@ -321,13 +329,33 @@ export async function restoreBackup(
             `INSERT INTO boards (id,data,revision) SELECT 'recovery:main',?,0 WHERE ${before}`,
           )
           .bind(JSON.stringify(initialBoard(SITE_LEAGUE))),
+    ...(exists
+      ? [
+          db
+            .prepare(
+              `INSERT OR REPLACE INTO level_rows (board_id,id,position,data)
+              SELECT 'recovery:main',id,position,data FROM level_rows WHERE board_id='main' AND ${before}`,
+            )
+            .bind(...beforeArgs),
+          db
+            .prepare(
+              `INSERT OR REPLACE INTO match_rows (board_id,id,data,revision)
+              SELECT 'recovery:main',id,data,revision FROM match_rows WHERE board_id='main' AND ${before}`,
+            )
+            .bind(...beforeArgs),
+        ]
+      : []),
     exists
       ? db
-          .prepare("UPDATE boards SET data=?,revision=revision+1 WHERE id='main' AND revision=?")
-          .bind(JSON.stringify(next), revision)
+          .prepare(
+            "UPDATE boards SET data=json_remove(?,'$.levels'),revision=revision+1 WHERE id='main' AND revision=?",
+          )
+          .bind(serializedNext, revision)
       : db
-          .prepare("INSERT OR IGNORE INTO boards (id,data,revision) VALUES ('main',?,1)")
-          .bind(JSON.stringify(next)),
+          .prepare(
+            "INSERT OR IGNORE INTO boards (id,data,revision) VALUES ('main',json_remove(?,'$.levels'),1)",
+          )
+          .bind(serializedNext),
     db.prepare(`DELETE FROM boards WHERE id LIKE 'archive:%' AND ${after}`).bind(...afterArgs),
     ...backup.records
       .filter((r) => r.id !== 'main')
@@ -337,7 +365,8 @@ export async function restoreBackup(
           .bind(r.id, JSON.stringify(r.data), ...afterArgs),
       ),
     db.prepare(`DELETE FROM sessions WHERE scope<>'admin' AND ${after}`).bind(...afterArgs),
+    ...matchRowSyncStatements(db, revision + 1, serializedNext),
   ];
   const result = await db.batch(statements);
-  return result[2].meta.changes ? (next as Board) : null;
+  return result[mainSaveIndex].meta.changes ? (next as Board) : null;
 }

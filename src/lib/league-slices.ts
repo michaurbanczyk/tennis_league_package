@@ -10,39 +10,44 @@ type StoredSlice = {
   heroBanner: string | null;
 };
 
+function levelFromRow(value: string): Level {
+  const data = JSON.parse(value) as Omit<Level, 'matches'>;
+  return { ...data, matches: [] } as Level;
+}
+
 export async function readLevelSlice(levelId: string) {
   const row = await database()
     .prepare(
       `
-      SELECT b.revision,l.value AS levelData,
+      SELECT b.revision,l.data AS levelData,
         json_extract(b.data,'$.season') AS season,
         json_extract(b.data,'$.finalsDates') AS finalsDates,
         json_extract(b.data,'$.courtGroups') AS courtGroups,
         json_extract(b.data,'$.heroBanner') AS heroBanner
-      FROM boards b,json_each(b.data,'$.levels') l
-      WHERE b.id='main' AND json_extract(l.value,'$.id')=? LIMIT 1
+      FROM boards b JOIN level_rows l ON l.board_id=b.id
+      WHERE b.id='main' AND l.id=? LIMIT 1
     `,
     )
     .bind(levelId)
     .first<StoredSlice>();
   if (!row) return null;
-  const level = JSON.parse(row.levelData) as Level;
-  const ids = level.matches.map((match) => match.id);
+  const level = levelFromRow(row.levelData);
   const revisions = new Map<string, number>();
-  const records = new Map<string, Match>();
-  if (ids.length) {
-    const rows = await database()
-      .prepare(
-        `SELECT id,data,revision FROM match_rows WHERE board_id='main' AND id IN (${ids.map(() => '?').join(',')})`,
-      )
-      .bind(...ids)
-      .all<{ id: string; data: string; revision: number }>();
-    for (const record of rows.results) {
-      revisions.set(record.id, record.revision);
-      records.set(record.id, JSON.parse(record.data) as Match);
-    }
+  const rows = await database()
+    .prepare(
+      `
+      SELECT r.id,r.data,r.revision
+      FROM level_matches lm JOIN match_rows r
+        ON r.board_id=lm.board_id AND r.id=lm.match_id
+      WHERE lm.board_id='main' AND lm.level_id=? ORDER BY lm.position
+    `,
+    )
+    .bind(levelId)
+    .all<{ id: string; data: string; revision: number }>();
+  for (const record of rows.results) {
+    revisions.set(record.id, record.revision);
+    level.matches.push(JSON.parse(record.data) as Match);
   }
-  level.matches = level.matches.map((match) => records.get(match.id) ?? match);
   return { row, level, revisions };
 }
 
@@ -50,25 +55,26 @@ export async function readMatchSlice(matchId: string) {
   const row = await database()
     .prepare(
       `
-      SELECT b.revision,l.value AS levelData,
+      SELECT b.revision,l.data AS levelData,
         json_extract(b.data,'$.season') AS season,
         json_extract(b.data,'$.finalsDates') AS finalsDates,
         json_extract(b.data,'$.courtGroups') AS courtGroups,
         json_extract(b.data,'$.heroBanner') AS heroBanner,
         r.data AS matchData,r.revision AS matchRevision
-      FROM boards b,json_each(b.data,'$.levels') l,json_each(l.value,'$.matches') m
-      LEFT JOIN match_rows r ON r.board_id=b.id AND r.id=json_extract(m.value,'$.id')
-      WHERE b.id='main' AND json_extract(m.value,'$.id')=? LIMIT 1
+      FROM boards b
+      JOIN level_rows l ON l.board_id=b.id
+      JOIN level_matches lm ON lm.board_id=l.board_id AND lm.level_id=l.id
+      JOIN match_rows r ON r.board_id=lm.board_id AND r.id=lm.match_id
+      WHERE b.id='main' AND r.id=? LIMIT 1
     `,
     )
     .bind(matchId)
-    .first<StoredSlice & { matchData: string | null; matchRevision: number | null }>();
+    .first<StoredSlice & { matchData: string; matchRevision: number }>();
   if (!row) return null;
-  const level = JSON.parse(row.levelData) as Level;
-  const match = row.matchData
-    ? (JSON.parse(row.matchData) as Match)
-    : level.matches.find((item) => item.id === matchId);
-  return match ? { row, level, match, matchRevision: row.matchRevision ?? 0 } : null;
+  const level = levelFromRow(row.levelData);
+  const match = JSON.parse(row.matchData) as Match;
+  level.matches = [match];
+  return { row, level, match, matchRevision: row.matchRevision };
 }
 
 export function visibleScope(match: Match, access: string | null) {

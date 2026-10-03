@@ -48,3 +48,13 @@ if (!tables.has('match_rows')) {
 }
 execute(['--file', 'drizzle/0002_backfill_match_rows.sql', '--yes']);
 console.log('Backfilled missing local D1 match records from the active league.');
+execute(['--file', 'drizzle/0003_level_rows.sql', '--yes']);
+console.log('Created local level_rows and backfilled active league levels.');
+execute(['--file', 'drizzle/0004_level_matches.sql', '--yes']);
+console.log('Created local level_matches and normalized level-to-match links.');
+const normalized = execute([
+  '--command',
+  "SELECT json_type(data,'$.levels') AS embedded_levels,(SELECT COUNT(*) FROM level_rows WHERE board_id='main') AS levels,(SELECT COUNT(*) FROM match_rows WHERE board_id='main') AS matches,(SELECT COUNT(*) FROM level_matches WHERE board_id='main') AS links FROM boards WHERE id='main'",
+  '--json',
+]);
+console.log(`Local normalized league: ${normalized.trim()}`);

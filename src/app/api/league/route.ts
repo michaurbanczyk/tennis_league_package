@@ -13,6 +13,8 @@ import { heroBannerSchema } from '@/lib/hero-banner';
 import { database, adminCode } from '@/db/raw';
 import { publishLeagueChange } from '@/lib/league-updates';
 import { sessionScope } from '@/lib/league-session';
+import { matchRowSyncStatements } from '@/lib/match-row-sync';
+import { readMainBoard } from '@/lib/normalized-board';
 import {
   hasMatchSchedule,
   MATCH_SCHEDULE_REQUIRED,
@@ -64,14 +66,11 @@ async function randomCode(used: Set<string>) {
   throw Error('Nie udało się wygenerować kodu. Spróbuj ponownie.');
 }
 async function read() {
-  const row = await database()
-    .prepare('SELECT data,revision FROM boards WHERE id=?')
-    .bind('main')
-    .first<{ data: string; revision: number }>();
+  const stored = await readMainBoard();
   return {
-    board: row ? (JSON.parse(row.data) as Board) : initialBoard(SITE_LEAGUE),
-    revision: row?.revision ?? 0,
-    exists: !!row,
+    board: stored.board ?? initialBoard(SITE_LEAGUE),
+    revision: stored.revision,
+    exists: stored.exists,
   };
 }
 
@@ -116,93 +115,6 @@ function publicData(
     })),
   };
 }
-const placeholderFields = new Set([
-  'id',
-  'stage',
-  'roundSize',
-  'sources',
-  'players',
-  'court',
-  'time',
-  'sets',
-  'status',
-  'winner',
-]);
-function isPlaceholderMatch(match: Match) {
-  return (
-    match.status === 'scheduled' &&
-    match.winner === null &&
-    match.players.length === 2 &&
-    match.players.every((player) => !player) &&
-    !match.court &&
-    !match.time &&
-    match.sets.length === 1 &&
-    match.sets[0].length === 2 &&
-    match.sets[0].every((score) => score === 0) &&
-    Object.keys(match).every((field) => placeholderFields.has(field))
-  );
-}
-async function published(b: Board, access: string | null, boardRevision: number) {
-  const db = database();
-  const matches = b.levels
-    .flatMap((level) => level.matches)
-    .filter((match) => !isPlaceholderMatch(match));
-  const existing = await db
-    .prepare(
-      "SELECT m.id,m.data,m.revision,b.revision AS boardRevision FROM boards b LEFT JOIN match_rows m ON m.board_id=b.id WHERE b.id='main'",
-    )
-    .all<{
-      id: string | null;
-      data: string | null;
-      revision: number | null;
-      boardRevision: number;
-    }>();
-  const currentBoardRevision = existing.results[0]?.boardRevision ?? boardRevision;
-  const current = new Map(existing.results.filter((row) => row.id).map((row) => [row.id, row]));
-  const changed =
-    currentBoardRevision === boardRevision
-      ? matches.filter((match) => current.get(match.id)?.data !== JSON.stringify(match))
-      : [];
-  const activeIds = new Set(matches.map((match) => match.id));
-  const stale =
-    currentBoardRevision === boardRevision &&
-    existing.results.some((row) => row.id !== null && !activeIds.has(row.id));
-  const statements = changed.map((match) =>
-    db
-      .prepare(
-        "INSERT INTO match_rows (board_id,id,data,revision) SELECT 'main',?,?,0 WHERE EXISTS (SELECT 1 FROM boards WHERE id='main' AND revision=?) ON CONFLICT(board_id,id) DO UPDATE SET data=excluded.data,revision=match_rows.revision+1 WHERE match_rows.data<>excluded.data",
-      )
-      .bind(match.id, JSON.stringify(match), boardRevision),
-  );
-  if (stale) {
-    const ids = [...activeIds];
-    statements.push(
-      db
-        .prepare(
-          `DELETE FROM match_rows WHERE board_id='main' ${ids.length ? `AND id NOT IN (${ids.map(() => '?').join(',')})` : ''} AND EXISTS (SELECT 1 FROM boards WHERE id='main' AND revision=?)`,
-        )
-        .bind(...ids, boardRevision),
-    );
-  }
-  if (statements.length) await db.batch(statements);
-  const rows = statements.length
-    ? await db
-        .prepare(
-          "SELECT m.id,m.data,m.revision,b.revision AS boardRevision FROM boards b LEFT JOIN match_rows m ON m.board_id=b.id WHERE b.id='main'",
-        )
-        .all<{
-          id: string | null;
-          data: string | null;
-          revision: number | null;
-          boardRevision: number;
-        }>()
-    : existing;
-  const consistent = (rows.results[0]?.boardRevision ?? boardRevision) === boardRevision;
-  const revisions = new Map(
-    rows.results.flatMap((row) => (row.id === null ? [] : [[row.id, row.revision] as const])),
-  );
-  return publicData(b, access, revisions, consistent);
-}
 async function publishedRead(b: Board, access: string | null, boardRevision: number) {
   const db = database();
   const rows = await db
@@ -218,9 +130,9 @@ async function publishedRead(b: Board, access: string | null, boardRevision: num
 }
 async function publishedAfterCommit(b: Board, access: string | null, boardRevision: number) {
   try {
-    return await published(b, access, boardRevision);
+    return await publishedRead(b, access, boardRevision);
   } catch (error) {
-    console.error('match revision sync failed after save', error);
+    console.error('match revision read failed after save', error);
     return publicData(b, access);
   }
 }
@@ -484,23 +396,27 @@ async function handlePost(req: Request, retry: number): Promise<Response> {
         editionId,
       };
       next.levels = next.levels.map((l) => makeLevel(l.name, 4, l.id, () => crypto.randomUUID()));
+      const serializedNext = JSON.stringify(next);
       // Reset only the current board, without creating a backup or archive.
       // The guarded batch also revokes existing player/referee sessions atomically.
       const saved = await db.batch([
         exists
           ? db
               .prepare(
-                "UPDATE boards SET data=?,revision=revision+1 WHERE id='main' AND revision=?",
+                "UPDATE boards SET data=json_remove(?,'$.levels'),revision=revision+1 WHERE id='main' AND revision=?",
               )
-              .bind(JSON.stringify(next), revision)
+              .bind(serializedNext, revision)
           : db
-              .prepare("INSERT OR IGNORE INTO boards (id,data,revision) VALUES ('main',?,1)")
-              .bind(JSON.stringify(next)),
+              .prepare(
+                "INSERT OR IGNORE INTO boards (id,data,revision) VALUES ('main',json_remove(?,'$.levels'),1)",
+              )
+              .bind(serializedNext),
         db
           .prepare(
             "DELETE FROM sessions WHERE scope<>'admin' AND EXISTS (SELECT 1 FROM boards WHERE id='main' AND revision=? AND json_extract(data,'$.editionId')=?)",
           )
           .bind(revision + 1, editionId),
+        ...matchRowSyncStatements(db, revision + 1, serializedNext),
       ]);
       if (!saved[0].meta.changes)
         return json(
@@ -575,6 +491,7 @@ async function handlePost(req: Request, retry: number): Promise<Response> {
         ...makeLevel(l.name, 4, l.id, () => crypto.randomUUID()),
         doubles: isDoubles(l),
       }));
+      const serializedNext = JSON.stringify(next);
       const saved = await db.batch([
         db
           .prepare(
@@ -587,13 +504,16 @@ async function handlePost(req: Request, retry: number): Promise<Response> {
             revision,
           ),
         db
-          .prepare('UPDATE boards SET data=?,revision=revision+1 WHERE id=? AND revision=?')
-          .bind(JSON.stringify(next), 'main', revision),
+          .prepare(
+            "UPDATE boards SET data=json_remove(?,'$.levels'),revision=revision+1 WHERE id=? AND revision=?",
+          )
+          .bind(serializedNext, 'main', revision),
         db
           .prepare(
             "DELETE FROM sessions WHERE scope<>? AND EXISTS (SELECT 1 FROM boards WHERE id=? AND revision=? AND json_extract(data,'$.editionId')=?)",
           )
           .bind('admin', 'main', revision + 1, editionId),
+        ...matchRowSyncStatements(db, revision + 1, serializedNext),
       ]);
       if (!saved[1].meta.changes)
         return json(
@@ -608,7 +528,6 @@ async function handlePost(req: Request, retry: number): Promise<Response> {
       });
     }
     let codes: Record<string, string> | undefined;
-    let scoredMatch: Match | null = null;
     const usedCodes = new Set(
       board.levels.flatMap((l) =>
         l.matches.flatMap((m) => [m.codeHash, m.refereeCodeHash]).filter((h): h is string => !!h),
@@ -641,7 +560,7 @@ async function handlePost(req: Request, retry: number): Promise<Response> {
           }
       if (!Object.keys(codes).length)
         return json({
-          ...(await published(board, access, revision)),
+          ...(await publishedRead(board, access, revision)),
           revision,
           scope: access,
           codes,
@@ -901,7 +820,6 @@ async function handlePost(req: Request, retry: number): Promise<Response> {
             },
             409,
           );
-        scoredMatch = match;
       }
       if (
         LEAGUE_FEATURES.bracketEditor &&
@@ -1016,29 +934,29 @@ async function handlePost(req: Request, retry: number): Promise<Response> {
       }
     }
     board.theme = SITE_LEAGUE;
+    const serializedBoard = JSON.stringify(board);
     let saved;
-    if (independentScore && scoredMatch && exists) {
+    if (exists) {
       const result = await db.batch([
         db
-          .prepare('UPDATE boards SET data=?,revision=revision+1 WHERE id=? AND revision=?')
-          .bind(JSON.stringify(board), 'main', revision),
-        db
           .prepare(
-            "INSERT INTO match_rows (board_id,id,data,revision) SELECT 'main',?,?,1 WHERE changes()=1 ON CONFLICT(board_id,id) DO UPDATE SET data=excluded.data,revision=match_rows.revision+1",
+            "UPDATE boards SET data=json_remove(?,'$.levels'),revision=revision+1 WHERE id=? AND revision=?",
           )
-          .bind(scoredMatch.id, JSON.stringify(scoredMatch)),
+          .bind(serializedBoard, 'main', revision),
+        ...matchRowSyncStatements(db, revision + 1, serializedBoard),
       ]);
       saved = result[0];
-    } else if (exists)
-      saved = await db
-        .prepare('UPDATE boards SET data=?,revision=revision+1 WHERE id=? AND revision=?')
-        .bind(JSON.stringify(board), 'main', revision)
-        .run();
-    else
-      saved = await db
-        .prepare('INSERT OR IGNORE INTO boards (id,data,revision) VALUES (?,?,1)')
-        .bind('main', JSON.stringify(board))
-        .run();
+    } else {
+      const result = await db.batch([
+        db
+          .prepare(
+            "INSERT OR IGNORE INTO boards (id,data,revision) VALUES (?,json_remove(?,'$.levels'),1)",
+          )
+          .bind('main', serializedBoard),
+        ...matchRowSyncStatements(db, 1, serializedBoard),
+      ]);
+      saved = result[0];
+    }
     if (!saved.meta.changes && independentScore && retry < 8)
       return handlePost(
         new Request(req.url, { method: 'POST', headers: req.headers, body: raw }),

@@ -55,3 +55,7 @@ if (!tables.has('match_rows')) {
 }
 execute(['--file', 'drizzle/0002_backfill_match_rows.sql']);
 console.log(`${config} missing match records were backfilled from the active league.`);
+execute(['--file', 'drizzle/0003_level_rows.sql']);
+console.log(`${config} level_rows table was created and backfilled.`);
+execute(['--file', 'drizzle/0004_level_matches.sql']);
+console.log(`${config} level_matches links were created.`);
