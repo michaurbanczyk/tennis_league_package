@@ -36,8 +36,8 @@ brak zapisów podczas GET, mecz live po 48 godzinach, punktację takiego meczu,
 zachowanie czasu przez zmianę strefy/DST oraz zgodność wcześniejszych kopii.
 Pozostałe testy sprawdzają punktację, awans, sesje, uprawnienia i konflikty zapisu.
 
-## Następny krok po przeglądzie
+## Kolejny krok
 
-Oddzielne rekordy meczów jako źródło danych w D1, migracja z obecnego JSON ligi
-oraz endpointy odczytu jednej drabinki i aktualizacji pojedynczego meczu.
-Powiadomienia dla widzów będą wymagać kolejnego kroku.
+Endpointy odczytu pojedynczej drabinki i meczu oraz zapis wyniku przez adres
+konkretnego meczu opisano w [kroku 2](d1-rebuild-step2.md). Dane nadal znajdują
+się w `boards.data`; migracja do osobnych rekordów meczów jest kolejnym etapem.

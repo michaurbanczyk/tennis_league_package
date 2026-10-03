@@ -50,7 +50,9 @@ export async function scoreMatch(
       .first<Slice>();
     if (!row) return { status: 404, data: { error: 'Nie znaleziono meczu.' } };
     const level = JSON.parse(row.levelData) as Level;
-    const match = level.matches.find((m) => m.id === body.matchId)!;
+    const matchIndex = level.matches.findIndex((m) => m.id === body.matchId);
+    if (matchIndex < 0) return { status: 404, data: { error: 'Nie znaleziono meczu.' } };
+    let match = level.matches[matchIndex];
     if (access !== 'admin') {
       if (scopeMatchId(access) !== match.id)
         return { status: 403, data: { error: 'Ten kod nie pozwala edytować tego meczu.' } };
@@ -79,6 +81,10 @@ export async function scoreMatch(
         .bind(targetData, match.id, row.matchRevision, row.revision)
         .run();
       return conflict();
+    }
+    if (row.matchData !== null) {
+      match = JSON.parse(row.matchData) as typeof match;
+      level.matches[matchIndex] = match;
     }
     if ((row.matchRevision ?? 0) !== body.matchRevision) return conflict();
     const board: Board = {

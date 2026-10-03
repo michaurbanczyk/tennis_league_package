@@ -12,6 +12,7 @@ import { normalizeYoutubeUrl } from '@/lib/youtube';
 import { heroBannerSchema } from '@/lib/hero-banner';
 import { database, adminCode } from '@/db/raw';
 import { publishLeagueChange } from '@/lib/league-updates';
+import { sessionScope } from '@/lib/league-session';
 import {
   hasMatchSchedule,
   MATCH_SCHEDULE_REQUIRED,
@@ -83,15 +84,7 @@ async function archives() {
   return rows.results;
 }
 
-async function scope(req: Request) {
-  const token = req.headers.get('cookie')?.match(/(?:^|; )tennis_session=([^;]+)/)?.[1];
-  if (!token) return null;
-  const row = await database()
-    .prepare('SELECT scope FROM sessions WHERE token=? AND expires>?')
-    .bind(await hash(token), Date.now())
-    .first<{ scope: string }>();
-  return row?.scope ?? null;
-}
+const scope = sessionScope;
 function validAccess(b: Board, access: string | null) {
   if (!access || access === 'admin') return access;
   return b.levels.some((l) =>

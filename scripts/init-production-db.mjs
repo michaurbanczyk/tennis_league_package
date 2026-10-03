@@ -53,3 +53,5 @@ if (!tables.has('match_rows')) {
 } else {
   console.log(`${config} D1 schema already contains match_rows.`);
 }
+execute(['--file', 'drizzle/0002_backfill_match_rows.sql']);
+console.log(`${config} missing match records were backfilled from the active league.`);

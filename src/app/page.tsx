@@ -133,6 +133,7 @@ export default function Home() {
   const ref = useRef(data),
     inFlight = useRef(false),
     pendingRefreshRevision = useRef(0),
+    selectionRequest = useRef(0),
     upgradeAttempt = useRef<number | null>(null);
   const apply = useCallback((d: Data) => {
     if (d.revision >= ref.current.revision) {
@@ -330,6 +331,7 @@ export default function Home() {
   const match = level?.matches.find((m) => m.id === selected);
   const all = board.levels.flatMap((l) => l.matches);
   function open(type: Modal, id?: string) {
+    const request = ++selectionRequest.current;
     if (type === 'reset-league') setResetRevision(ref.current.revision);
     if (type === 'create') {
       const target =
@@ -344,6 +346,60 @@ export default function Home() {
     setError('');
     setModal(type);
     setDemoEdit(false);
+    if (id && !archived && !isDemo) {
+      void fetch(`/api/matches/${encodeURIComponent(id)}`, {
+        cache: 'no-store',
+        signal: AbortSignal.timeout(8000),
+      })
+        .then(async (response) => {
+          const result: any = await response.json();
+          if (!response.ok) throw Error(result.error || 'Nie udało się pobrać meczu.');
+          return result;
+        })
+        .then((result) => {
+          if (request !== selectionRequest.current) return;
+          const current = ref.current;
+          if (result.revision !== current.revision) {
+            void refresh();
+            return;
+          }
+          const levels = current.levels.map((item) =>
+            item.id === result.level.id
+              ? {
+                  ...item,
+                  matches: item.matches.map((candidate) =>
+                    candidate.id === id ? result.match : candidate,
+                  ),
+                }
+              : item,
+          );
+          apply({ ...current, levels });
+        })
+        .catch(() => {});
+    }
+  }
+  async function selectLevel(id: string) {
+    setFilter(id);
+    if (id === 'all' || archived || isDemo) return;
+    try {
+      const response = await fetch(`/api/levels/${encodeURIComponent(id)}/draw`, {
+        cache: 'no-store',
+        signal: AbortSignal.timeout(8000),
+      });
+      const result: any = await response.json();
+      if (!response.ok) throw Error(result.error || 'Nie udało się pobrać drabinki.');
+      const current = ref.current;
+      if (result.revision !== current.revision) {
+        void refresh();
+        return;
+      }
+      apply({
+        ...current,
+        levels: current.levels.map((item) => (item.id === id ? result.level : item)),
+      });
+    } catch {
+      // The already loaded league view remains available if the slice read fails.
+    }
   }
   async function post(action: string, extra: Record<string, unknown> = {}) {
     if (archived && !['login', 'logout', 'delete_archive'].includes(action)) return null;
@@ -352,10 +408,18 @@ export default function Home() {
     setBusy(true);
     setError('');
     try {
-      const r = await fetch('/api/league' + (action === 'restore_backup' ? '?restore=1' : ''), {
+      const matchAction = extra.response === 'match-delta' && typeof extra.matchId === 'string';
+      const endpoint = matchAction
+        ? `/api/matches/${encodeURIComponent(extra.matchId as string)}/actions`
+        : '/api/league' + (action === 'restore_backup' ? '?restore=1' : '');
+      const r = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, revision: ref.current.revision, ...extra }),
+        body: JSON.stringify({
+          action,
+          ...(matchAction ? {} : { revision: ref.current.revision }),
+          ...extra,
+        }),
       });
       const d: any = await r.json();
       if (!r.ok) {
@@ -957,7 +1021,7 @@ export default function Home() {
           isDemo={isDemo}
           archiveId={selectedArchive}
           activeLevelFilter={activeLevelFilter}
-          setFilter={setFilter}
+          setFilter={selectLevel}
           resultLevels={resultLevels}
           admin={admin}
           open={open}

@@ -46,3 +46,5 @@ if (!tables.has('match_rows')) {
 } else {
   console.log('Local D1 match_rows table already exists.');
 }
+execute(['--file', 'drizzle/0002_backfill_match_rows.sql', '--yes']);
+console.log('Backfilled missing local D1 match records from the active league.');
