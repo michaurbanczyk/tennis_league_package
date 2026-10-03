@@ -37,8 +37,6 @@ export type Match = Score & {
   currentCode?: string;
   codeFormat?: 'pin5';
   needsCodeUpgrade?: boolean;
-  history?: Score[];
-  canUndo?: boolean;
   configured?: boolean;
   updated?: string;
 };
@@ -84,21 +82,6 @@ export function matchWinner(sets: number[][], format: string): number | null {
   });
   return wins[0] >= 2 ? 0 : wins[1] >= 2 ? 1 : null;
 }
-export function scoreSnapshot(m: Match): Score {
-  return {
-    ...(LEAGUE_FEATURES.bracketEditor
-      ? { actualStartedAt: m.actualStartedAt ?? null, finishedAt: m.finishedAt ?? null }
-      : {}),
-    sets: structuredClone(m.sets),
-    startedAt: m.startedAt ?? null,
-    unfinishedAt: m.unfinishedAt ?? null,
-    status: m.status,
-    winner: m.winner,
-    finishedTime: m.finishedTime ?? null,
-    points: [...(m.points || [0, 0])],
-    tieBreaks: structuredClone(m.tieBreaks || {}),
-  };
-}
 export function pointMode(m: Match, format: string): 'game' | 'tie-break' | 'super' {
   let index = m.sets.length - 1;
   if (
@@ -142,9 +125,6 @@ export function addPoint(m: Match, player: number, format: string): void {
     throw Error('Wynik jest kompletny. Zatwierdź zakończenie meczu.');
   if (!m.refereeEnabled && pointMode(m, format) !== 'tie-break')
     throw Error('Punkty można wpisywać tylko podczas tie-breaka.');
-  m.history ??= [];
-  m.history.push(scoreSnapshot(m));
-  if (m.history.length > 500) m.history.shift();
   let index = m.sets.length - 1;
   if (setWinner(m.sets[index], format === 'super' && index === 2) !== null) {
     m.sets.push([0, 0]);
@@ -175,8 +155,6 @@ export function startMatch(m: Match, now = Date.now()): void {
     throw Error(m.status === 'finished' ? 'Mecz jest już zakończony.' : 'Mecz już trwa.');
   if (m.players.length !== 2 || !m.players.every(Boolean))
     throw Error('Poczekaj na ustalenie obydwu zawodników.');
-  m.history ??= [];
-  m.history.push(scoreSnapshot(m));
   if (LEAGUE_FEATURES.bracketEditor) {
     m.actualStartedAt =
       m.status === 'scheduled'
@@ -188,63 +166,14 @@ export function startMatch(m: Match, now = Date.now()): void {
   m.startedAt = new Date(now).toISOString();
   m.unfinishedAt = null;
 }
-// Actual start/resume time is independent of the scheduled date and never
-// extended by points, score corrections or changes to match details.
-export const LIVE_LIMIT_MS = 12 * 60 * 60 * 1000;
-export function normalizeLiveMatches(board: Board, now = Date.now()): boolean {
-  let changed = false;
-  for (const level of board.levels)
-    for (const m of level.matches) {
-      if (m.status !== 'live') continue;
-      let start = Date.parse(m.startedAt || '');
-      if (!Number.isFinite(start)) {
-        // Legacy boards did not store a start time. The last persisted activity is
-        // the latest possible start; pin this fallback once, never on each read.
-        start = Date.parse(m.updated || '');
-        m.startedAt = Number.isFinite(start) ? new Date(start).toISOString() : null;
-        changed = true;
-      }
-      if (!Number.isFinite(start) || now >= start + LIVE_LIMIT_MS) {
-        m.status = 'unfinished';
-        m.winner = null;
-        m.finishedTime = null;
-        m.unfinishedAt = new Date(
-          Number.isFinite(start) ? start + LIVE_LIMIT_MS : now,
-        ).toISOString();
-        changed = true;
-      }
-    }
-  return changed;
-}
-export function undoScore(m: Match): void {
-  const last = m.history?.pop();
-  if (!last) throw Error('Nie ma zmiany do cofnięcia.');
-  const startedAt =
-    last.startedAt === undefined && last.status !== 'scheduled' ? m.startedAt : last.startedAt;
-  Object.assign(m, last);
-  if (LEAGUE_FEATURES.bracketEditor) {
-    m.actualStartedAt =
-      last.actualStartedAt ?? (last.status === 'scheduled' ? null : startedAt) ?? null;
-    m.finishedAt = last.finishedAt ?? null;
-  }
-  m.startedAt = startedAt ?? null;
-  m.unfinishedAt = last.unfinishedAt ?? null;
-  m.finishedTime = last.finishedTime ?? null;
-  m.points = last.points || [0, 0];
-  m.tieBreaks = last.tieBreaks || {};
-}
 export function addScore(m: Match, player: number, format: string): void {
-  if (m.status === 'finished')
-    throw Error('Mecz jest zakończony. Najpierw cofnij ostatnią zmianę.');
+  if (m.status === 'finished') throw Error('Mecz jest zakończony.');
   if (m.status !== 'live') throw Error('Najpierw kliknij „Rozpocznij mecz”.');
   if (!m.players.every(Boolean)) throw Error('Poczekaj na rozstrzygnięcie półfinałów.');
   if (matchWinner(m.sets, format) !== null)
     throw Error('Wynik jest kompletny. Zatwierdź zakończenie meczu.');
   if (pointMode(m, format) === 'tie-break')
     throw Error('Przy 6:6 wpisuj punkty tie-breaka, nie przyznawaj całego gema.');
-  m.history ??= [];
-  m.history.push(scoreSnapshot(m));
-  if (m.history.length > 300) m.history.shift();
   let i = m.sets.length - 1;
   if (setWinner(m.sets[i], format === 'super' && i === 2) !== null) {
     m.sets.push([0, 0]);
@@ -387,7 +316,6 @@ export function makeLevel(
         sets: [[0, 0]],
         status: 'scheduled',
         winner: null,
-        history: [],
       };
       if (previous.length)
         m.sources = previous
@@ -411,7 +339,6 @@ export function makeLevel(
       sets: [[0, 0]],
       status: 'scheduled',
       winner: null,
-      history: [],
     });
   return level;
 }
@@ -423,7 +350,7 @@ export function initialBoard(theme: import('./league-theme').LeagueTheme = 'smar
     ),
   };
 }
-// Old four-match boards keep their match IDs, scores, codes and history.
+// Old four-match boards keep their match IDs, scores and codes.
 export function matchSources(level: Level, m: Match): MatchSource[] {
   if (m.sources) return m.sources;
   if (level.matches.length === 4 && (m.stage === 'Finał' || m.stage === 'O 3. miejsce'))

@@ -269,7 +269,7 @@ async function main() {
   await ok(fresh.post('restore_backup', { backup, confirm: true }));
   assert.equal(fresh.board().season, restored.season);
   console.log(
-    `PASS ${league}: schedule conflicts, self slot, date/time/court distinctions, concurrent scheduling, admin-only backups, full archive/code/history roundtrip, wrong-league and malformed rejection, stale restore, atomic rollback, recovery, session revocation, public privacy, fresh installation.`,
+    `PASS ${league}: schedule conflicts, self slot, date/time/court distinctions, concurrent scheduling, admin-only backups, full archive/code/score roundtrip, wrong-league and malformed rejection, stale restore, atomic rollback, recovery, session revocation, public privacy, fresh installation.`,
   );
 }
 const log = console.error;

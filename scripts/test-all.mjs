@@ -1,11 +1,12 @@
 import { spawnSync } from 'node:child_process';
 
 const tests = [
+  'tests/match-delta.cjs',
   'tests/referee.cjs',
   'tests/schedule-backups.cjs',
   'tests/reset-league.cjs',
   'tests/level-management.cjs',
-  'tests/live-expiry.cjs',
+  'tests/live-duration.cjs',
   'tests/horizontal-bracket.cjs',
   'tests/tie-break-display.cjs',
   'tests/bracket-pdf.cjs',

@@ -1,4 +1,4 @@
-import { CheckCheck, Loader2, Play, Plus, Settings2, Undo2 } from 'lucide-react';
+import { CheckCheck, Loader2, Play, Plus, Settings2 } from 'lucide-react';
 import { MatchCard, type MatchCardProps } from '@/components/tennis/match-card';
 import { RefereeScoring } from '@/components/tennis/referee';
 import type { LeagueModal } from '@/lib/league-page-types';
@@ -187,10 +187,7 @@ export function ScoreEditor({
                 <p>
                   <strong>Mecz rozpoczęty, ale niedokończony</strong>
                 </p>
-                <p>
-                  Minęło 12 godzin od rozpoczęcia. Wynik został zachowany; mecz nie jest już
-                  pokazywany na żywo.
-                </p>
+                <p>Wynik został zachowany. Możesz wznowić grę lub zatwierdzić kompletny wynik.</p>
                 {match.refereeEnabled && !ready && (
                   <p>
                     Ostatnie punkty:{' '}
@@ -209,7 +206,7 @@ export function ScoreEditor({
                 <p>
                   {ready
                     ? 'Możesz zatwierdzić zapisany wynik poniżej.'
-                    : 'Wznów tylko wtedy, gdy wracacie do gry. Od wznowienia biegnie nowy limit 12 godzin.'}
+                    : 'Wznów mecz, gdy wracacie do gry.'}
                 </p>
               </div>
             ) : match.refereeEnabled ? (
@@ -287,15 +284,8 @@ export function ScoreEditor({
                 <span>Czas lokalny w Polsce. Możesz poprawić godzinę przed zatwierdzeniem.</span>
               </label>
             )}
-            <div className="editor-actions">
-              <button
-                className="button outline"
-                disabled={busy || !(demoEdit ? match.history?.length : match.canUndo)}
-                onClick={() => score('undo')}
-              >
-                <Undo2 size={17} /> {match.refereeEnabled ? 'Cofnij ostatnią zmianę' : 'Cofnij'}
-              </button>
-              {ready && match.status !== 'finished' && (
+            {ready && match.status !== 'finished' && (
+              <div className="editor-actions">
                 <button
                   className="button dark"
                   disabled={
@@ -307,8 +297,8 @@ export function ScoreEditor({
                 >
                   <CheckCheck size={17} /> Zakończ mecz
                 </button>
-              )}
-            </div>
+              </div>
+            )}
             <p className="form-note">
               {busy ? (
                 <>

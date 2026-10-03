@@ -67,7 +67,6 @@ import {
   demo,
   matchWinner,
   setWinner,
-  LIVE_LIMIT_MS,
   type Board,
   type Match,
 } from '@/lib/tennis';
@@ -76,6 +75,7 @@ import { ScheduleView } from '@/components/tennis/schedule-view';
 import { LiveView } from '@/components/tennis/live-view';
 import { CourtSelect, MatchDateSelect } from '@/components/tennis/match-form-fields';
 import type { LeagueData as Data, LeagueModal as Modal } from '@/lib/league-page-types';
+import { mergeMatchDelta } from '@/lib/match-delta';
 
 const empty: Data = { levels: [], theme: SITE_LEAGUE, revision: 0, scope: null };
 
@@ -132,6 +132,7 @@ export default function Home() {
   const [chosenLevel, setChosenLevel] = useState('');
   const ref = useRef(data),
     inFlight = useRef(false),
+    pendingRefreshRevision = useRef(0),
     upgradeAttempt = useRef<number | null>(null);
   const apply = useCallback((d: Data) => {
     if (d.revision >= ref.current.revision) {
@@ -176,8 +177,14 @@ export default function Home() {
       socket.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data) as { type?: string; revision?: number };
-          if (message.type === 'changed' && Number(message.revision) > ref.current.revision)
-            void refresh();
+          if (message.type === 'changed' && Number(message.revision) > ref.current.revision) {
+            if (inFlight.current)
+              pendingRefreshRevision.current = Math.max(
+                pendingRefreshRevision.current,
+                Number(message.revision),
+              );
+            else void refresh();
+          }
         } catch {
           // Ignore malformed realtime messages.
         }
@@ -202,17 +209,6 @@ export default function Home() {
       window.removeEventListener('focus', focus);
     };
   }, [refresh]);
-  useEffect(() => {
-    const nextExpiry = data.levels
-      .flatMap((level) => level.matches)
-      .filter((match) => match.status === 'live' && match.startedAt)
-      .map((match) => Date.parse(match.startedAt!) + LIVE_LIMIT_MS)
-      .filter(Number.isFinite)
-      .sort((a, b) => a - b)[0];
-    if (nextExpiry === undefined) return;
-    const timer = setTimeout(() => void refresh(), Math.max(0, nextExpiry - Date.now() + 1000));
-    return () => clearTimeout(timer);
-  }, [data.levels, refresh]);
   useEffect(() => {
     const context = (document as any).modelContext;
     if (!context?.registerTool) return;
@@ -366,7 +362,11 @@ export default function Home() {
         if (r.status === 409) await refresh();
         throw Error(d.error || 'Nie udało się zapisać zmiany.');
       }
-      if (d.levels) apply(d);
+      if (d.kind === 'match-delta') {
+        const merged = mergeMatchDelta(ref.current, d);
+        if (merged) apply(merged);
+        else await refresh();
+      } else if (d.levels) apply(d);
       else await refresh();
       return d;
     } catch (e) {
@@ -376,6 +376,8 @@ export default function Home() {
       return null;
     } finally {
       inFlight.current = false;
+      if (pendingRefreshRevision.current > ref.current.revision) void refresh();
+      pendingRefreshRevision.current = 0;
       setBusy(false);
     }
   }
@@ -442,19 +444,11 @@ export default function Home() {
       const l = b.levels.find((l) => l.id === level?.id)!;
       const m = l.matches.find((m) => m.id === match.id)!;
       try {
-        const { addPoint, addScore, startMatch, undoScore } = await import('@/lib/tennis');
+        const { addPoint, addScore, startMatch } = await import('@/lib/tennis');
         if (action === 'start') startMatch(m);
         if (action === 'add') addScore(m, player!, l.format);
         if (action === 'point') addPoint(m, player!, l.format);
-        if (action === 'undo') undoScore(m);
         if (action === 'finish') {
-          m.history ??= [];
-          m.history.push({
-            sets: structuredClone(m.sets),
-            status: m.status,
-            winner: m.winner,
-            finishedTime: m.finishedTime ?? null,
-          });
           m.status = 'finished';
           m.winner = matchWinner(m.sets, l.format);
           m.finishedTime = finishedTime;
@@ -471,6 +465,7 @@ export default function Home() {
       return;
     }
     await post(action, {
+      response: 'match-delta',
       matchId: match.id,
       matchRevision: match.matchRevision ?? 0,
       player,

@@ -1,4 +1,6 @@
-import { finishInstant } from '@/lib/match-timing';
+import { applyScoreAction, scoreActions } from '@/lib/match-score-action';
+import { scoreMatch } from '@/lib/score-match';
+import { publicMatch } from '@/lib/public-match';
 import { validateSiteSeason, finalsDates, validCourt } from '@/lib/league-policy';
 import { validateCourtGroups, courtGroups, courtEntries } from '@/lib/court-config';
 import { normalizeLevelName, levelNameKey, MAX_LEVELS } from '@/lib/level-settings';
@@ -11,12 +13,9 @@ import { heroBannerSchema } from '@/lib/hero-banner';
 import { database, adminCode } from '@/db/raw';
 import { publishLeagueChange } from '@/lib/league-updates';
 import {
-  matchFormat,
   hasMatchSchedule,
   MATCH_SCHEDULE_REQUIRED,
   validateLevelSeeds,
-  normalizeLiveMatches,
-  undoScore,
   initialBoard,
   levelsForTheme,
   makeLevel,
@@ -25,18 +24,12 @@ import {
   matchSources,
   propagatePlayers,
   hasStartedDescendant,
-  addScore,
-  addPoint,
-  scoreSnapshot,
   refereeScope,
-  startMatch,
-  matchWinner,
   type Board,
   type Match,
   type Level,
 } from '@/lib/tennis';
 export const dynamic = 'force-dynamic';
-const scoreActions = new Set(['start', 'point', 'add', 'finish', 'undo']);
 const json = (data: unknown, status = 200, headers: Record<string, string> = {}) =>
   Response.json(data, {
     status,
@@ -70,28 +63,17 @@ async function randomCode(used: Set<string>) {
   throw Error('Nie udało się wygenerować kodu. Spróbuj ponownie.');
 }
 async function read() {
-  // Persist elapsed live states on read as well as write, so no open editor or
-  // browser timer is required. A revision guard preserves concurrent scores.
-  for (let attempt = 0; attempt < 4; attempt++) {
-    const db = database(),
-      row = await db
-        .prepare('SELECT data,revision FROM boards WHERE id=?')
-        .bind('main')
-        .first<{ data: string; revision: number }>();
-    const board = row ? (JSON.parse(row.data) as Board) : initialBoard(SITE_LEAGUE),
-      revision = row?.revision ?? 0;
-    if (!row || !normalizeLiveMatches(board)) return { board, revision, exists: !!row };
-    const saved = await db
-      .prepare('UPDATE boards SET data=?,revision=revision+1 WHERE id=? AND revision=?')
-      .bind(JSON.stringify(board), 'main', revision)
-      .run();
-    if (saved.meta.changes) {
-      await publishLeagueChange(revision + 1);
-      return { board, revision: revision + 1, exists: true };
-    }
-  }
-  throw Error('Dane zmieniają się w tej chwili. Spróbuj ponownie.');
+  const row = await database()
+    .prepare('SELECT data,revision FROM boards WHERE id=?')
+    .bind('main')
+    .first<{ data: string; revision: number }>();
+  return {
+    board: row ? (JSON.parse(row.data) as Board) : initialBoard(SITE_LEAGUE),
+    revision: row?.revision ?? 0,
+    exists: !!row,
+  };
 }
+
 async function archives() {
   const rows = await database()
     .prepare(
@@ -120,7 +102,12 @@ function validAccess(b: Board, access: string | null) {
     ? access
     : null;
 }
-function publicData(b: Board, access: string | null = null) {
+function publicData(
+  b: Board,
+  access: string | null = null,
+  revisions?: Map<string, number | null>,
+  consistent = true,
+) {
   return {
     theme: SITE_LEAGUE,
     season: b.season ?? null,
@@ -129,27 +116,10 @@ function publicData(b: Board, access: string | null = null) {
     ...(b.courtGroups ? { courtGroups: b.courtGroups } : {}),
     levels: b.levels.map((l) => ({
       ...l,
-      matches: l.matches.map(
-        ({
-          codeHash,
-          savedCode,
-          currentCode,
-          refereeCodeHash,
-          refereeSavedCode,
-          refereeCurrentCode,
-          refereeToken,
-          history,
-          ...m
-        }) => ({
-          ...m,
-          ...(access === 'admin' && savedCode ? { currentCode: savedCode } : {}),
-          ...(access === 'admin' && m.refereeEnabled && refereeSavedCode
-            ? { refereeCurrentCode: refereeSavedCode }
-            : {}),
-          needsCodeUpgrade: !!codeHash && m.codeFormat !== 'pin5',
-          canUndo: !!history?.length,
-        }),
-      ),
+      matches: l.matches.map((m) => ({
+        ...publicMatch(m, access),
+        ...(revisions ? { matchRevision: consistent ? (revisions.get(m.id) ?? 0) : -1 } : {}),
+      })),
     })),
   };
 }
@@ -164,7 +134,6 @@ const placeholderFields = new Set([
   'sets',
   'status',
   'winner',
-  'history',
 ]);
 function isPlaceholderMatch(match: Match) {
   return (
@@ -177,7 +146,6 @@ function isPlaceholderMatch(match: Match) {
     match.sets.length === 1 &&
     match.sets[0].length === 2 &&
     match.sets[0].every((score) => score === 0) &&
-    !match.history?.length &&
     Object.keys(match).every((field) => placeholderFields.has(field))
   );
 }
@@ -238,19 +206,22 @@ async function published(b: Board, access: string | null, boardRevision: number)
     : existing;
   const consistent = (rows.results[0]?.boardRevision ?? boardRevision) === boardRevision;
   const revisions = new Map(
-    rows.results.filter((row) => row.id).map((row) => [row.id, row.revision]),
+    rows.results.flatMap((row) => (row.id === null ? [] : [[row.id, row.revision] as const])),
   );
-  const data = publicData(b, access);
-  return {
-    ...data,
-    levels: data.levels.map((level) => ({
-      ...level,
-      matches: level.matches.map((match) => ({
-        ...match,
-        matchRevision: consistent ? (revisions.get(match.id) ?? 0) : -1,
-      })),
-    })),
-  };
+  return publicData(b, access, revisions, consistent);
+}
+async function publishedRead(b: Board, access: string | null, boardRevision: number) {
+  const db = database();
+  const rows = await db
+    .prepare(
+      "SELECT m.id,m.revision,b.revision AS boardRevision FROM boards b LEFT JOIN match_rows m ON m.board_id=b.id WHERE b.id='main'",
+    )
+    .all<{ id: string | null; revision: number | null; boardRevision: number }>();
+  const consistent = (rows.results[0]?.boardRevision ?? boardRevision) === boardRevision;
+  const revisions = new Map(
+    rows.results.flatMap((row) => (row.id === null ? [] : [[row.id, row.revision] as const])),
+  );
+  return publicData(b, access, revisions, consistent);
 }
 async function publishedAfterCommit(b: Board, access: string | null, boardRevision: number) {
   try {
@@ -311,7 +282,7 @@ export async function GET(req: Request) {
     const { board, revision } = await read();
     const access = validAccess(board, await scope(req));
     return json({
-      ...(await published(board, access, revision)),
+      ...(await publishedRead(board, access, revision)),
       archives: await archives(),
       revision,
       scope: access,
@@ -342,6 +313,11 @@ async function handlePost(req: Request, retry: number): Promise<Response> {
       return json({ error: 'Tylko organizator może przywracać kopie zapasowe.' }, 403);
     const raw = await readBackupRequest(req, restoring ? BACKUP_MAX_BYTES : 12000);
     const body = JSON.parse(raw);
+    if (body.action === 'undo') return json({ error: 'Cofanie wyniku nie jest dostępne.' }, 400);
+    if (body.response === 'match-delta' && scoreActions.has(body.action)) {
+      const result = await scoreMatch(body, () => scope(req));
+      return json(result.data, result.status);
+    }
     const independentScore = scoreActions.has(body.action) && Number.isInteger(body.matchRevision);
     const db = database();
     const { board, revision, exists } = await read();
@@ -936,7 +912,7 @@ async function handlePost(req: Request, retry: number): Promise<Response> {
       }
       if (
         LEAGUE_FEATURES.bracketEditor &&
-        ['start', 'add', 'point', 'finish', 'undo'].includes(body.action) &&
+        ['start', 'add', 'point', 'finish'].includes(body.action) &&
         !hasMatchSchedule(match, board)
       )
         throw Error(MATCH_SCHEDULE_REQUIRED);
@@ -947,7 +923,7 @@ async function handlePost(req: Request, retry: number): Promise<Response> {
         if (typeof body.enabled !== 'boolean') throw Error('Wybierz tryb sędziowania.');
         const changed = body.enabled !== !!match.refereeEnabled;
         if (changed && (match.points || []).some((p) => p > 0))
-          throw Error('Zmień tryb po zakończeniu gema lub cofnij jego punkty do 0:0.');
+          throw Error('Zmień tryb sędziowania po zakończeniu gema, przy punktach 0:0.');
         if (body.enabled && (changed || body.rotate === true)) {
           const r = await randomCode(usedCodes);
           match.refereeCodeHash = r.codeHash;
@@ -962,7 +938,6 @@ async function handlePost(req: Request, retry: number): Promise<Response> {
         match.refereeEnabled = body.enabled;
         if (changed) {
           match.points = [0, 0];
-          match.history = [];
         }
       } else if (body.action === 'rotate') {
         if (access !== 'admin') return json({ error: 'Tylko organizator może zmieniać kod.' }, 403);
@@ -977,41 +952,8 @@ async function handlePost(req: Request, retry: number): Promise<Response> {
             { error: 'Ten mecz prowadzi sędzia. Kod zawodnika pozwala tylko oglądać wynik.' },
             403,
           );
-        if (
-          body.action !== 'details' &&
-          match.status === 'finished' &&
-          hasStartedDescendant(level, match.id)
-        )
-          throw Error(
-            'Mecz kolejnej rundy już się rozpoczął. Najpierw cofnij jego wynik do początku.',
-          );
-        if (body.action === 'start') startMatch(match);
-        else if (body.action === 'point') addPoint(match, body.player, matchFormat(level, match));
-        else if (body.action === 'add') {
-          if (match.refereeEnabled) throw Error('W meczu sędziowanym wpisuj punkty, nie gemy.');
-          if (body.player !== 0 && body.player !== 1) throw Error('Wybierz zawodnika.');
-          addScore(match, body.player, matchFormat(level, match));
-        } else if (body.action === 'undo') {
-          undoScore(match);
-          normalizeLiveMatches(board);
-        } else if (body.action === 'finish') {
-          const w = matchWinner(match.sets, matchFormat(level, match));
-          if (w === null) throw Error('Mecz kończy się po wygraniu dwóch setów.');
-          if (match.status === 'finished') throw Error('Mecz jest już zakończony.');
-          if (match.status === 'scheduled') throw Error('Najpierw rozpocznij mecz.');
-          const finishedTime = validTime(body.finishedTime);
-          if (!finishedTime) throw Error('Podaj godzinę zakończenia meczu.');
-          const finishedAt = LEAGUE_FEATURES.bracketEditor
-            ? finishInstant(match, finishedTime, body.finishedDate)
-            : null;
-          match.history ??= [];
-          match.history.push(scoreSnapshot(match));
-          if (LEAGUE_FEATURES.bracketEditor) match.finishedAt = finishedAt;
-          match.status = 'finished';
-          match.winner = w;
-          match.finishedTime = finishedTime;
-          match.unfinishedAt = null;
-        } else if (body.action === 'details') {
+        if (scoreActions.has(body.action)) applyScoreAction(board, level, match, body);
+        else if (body.action === 'details') {
           if (access !== 'admin')
             return json({ error: 'Tylko organizator może zmieniać dane meczu.' }, 403);
           if (body.seeds !== undefined && (!entry || !LEAGUE_FEATURES.bracketEditor))
@@ -1080,7 +1022,6 @@ async function handlePost(req: Request, retry: number): Promise<Response> {
         match.updated = new Date().toISOString();
       }
     }
-    normalizeLiveMatches(board);
     board.theme = SITE_LEAGUE;
     let saved;
     if (independentScore && scoredMatch && exists) {

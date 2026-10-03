@@ -131,7 +131,7 @@ async function main() {
   assert.equal(rtl.board().levels[0].matches.filter((m) => m.refereeEnabled).length, 1);
   await ok(rtl.post('login', { code: first.currentCode }));
   const player = rtl.cookie();
-  for (const action of ['start', 'point', 'add', 'undo', 'finish'])
+  for (const action of ['start', 'point', 'add', 'finish'])
     assert.equal(
       (await rtl.post(action, { matchId: id, player: 0, finishedTime: '18:00' }, player)).status,
       403,
@@ -163,7 +163,7 @@ async function main() {
   await pt(1);
   assert.deepEqual(m().sets, [[0, 1]]);
   assert.deepEqual(m().points, [0, 0]);
-  await ok(rtl.post('undo', { matchId: id }, referee));
+  setPosition([[0, 0]], [3, 4]);
   assert.deepEqual(m().sets, [[0, 0]]);
   assert.deepEqual(t.pointLabels(m(), 'super'), ['40', 'AD']);
   const snapshot = rtl.stored();
@@ -215,21 +215,20 @@ async function main() {
       points,
       status: 'live',
       winner: null,
-      history: [],
       tieBreaks: {},
     });
     rtl.db
       .prepare('UPDATE boards SET data=?,revision=revision+1 WHERE id=?')
       .run(JSON.stringify(b), 'main');
   }
-  // 7-point tiebreak requires a two-point margin; undo restores the final tiebreak point.
+  // 7-point tiebreak requires a two-point margin.
   setPosition([[6, 6]], [6, 6]);
   await pt(0);
   assert.deepEqual(m().sets, [[6, 6]]);
   await pt(0);
   assert.deepEqual(m().sets, [[7, 6]]);
   assert.deepEqual(m().tieBreaks, { 0: [8, 6] });
-  await ok(rtl.post('undo', { matchId: id }, referee));
+  setPosition([[6, 6]], [7, 6]);
   assert.deepEqual(m().points, [7, 6]);
   assert.deepEqual(m().sets, [[6, 6]]);
   await pt(0);
@@ -239,7 +238,7 @@ async function main() {
     [0, 0],
   ]);
   assert.deepEqual(t.pointLabels(m(), 'super'), ['0', '15']);
-  // Third-set super tiebreak, match finish and reopening.
+  // Third-set super tiebreak and match finish.
   setPosition([
     [6, 4],
     [4, 6],
@@ -278,12 +277,9 @@ async function main() {
   assert.equal(m().finishedTime, finishedTime);
   assert(Number.isFinite(Date.parse(m().finishedAt)));
   assert.equal(rtl.board().levels[0].matches[2].players[0], 'Michał Urbańczyk');
-  await ok(rtl.post('undo', { matchId: id }, referee));
-  assert.equal(m().status, 'live');
-  assert.equal(m().finishedAt, null);
-  assert.equal(rtl.board().levels[0].matches[2].players[0], '');
-  await ok(rtl.post('undo', { matchId: id }, referee));
-  assert.deepEqual(m().sets[2], [9, 10]);
+  const completed = rtl.stored();
+  assert.equal((await rtl.post('undo', { matchId: id }, referee)).status, 400);
+  assert.equal(rtl.stored(), completed);
   // Classic third set uses tennis games, not super tiebreak points.
   setPosition(
     [
@@ -302,7 +298,7 @@ async function main() {
   assert.equal((await rtl.post('point', { matchId: id, player: 0 }, referee)).status, 401);
   await ok(rtl.post('add', { matchId: id, player: 0 }, player));
   assert.deepEqual(m().sets[2], [2, 0]);
-  // Without a referee, 6:6 is still scored point by point and can be undone.
+  // Without a referee, 6:6 is still scored point by point.
   setPosition([[6, 6]], [6, 6], 'classic');
   assert.equal((await rtl.post('add', { matchId: id, player: 0 }, player)).status, 400);
   await pt(0, player);
@@ -311,9 +307,6 @@ async function main() {
   await pt(0, player);
   assert.deepEqual(m().sets, [[7, 6]]);
   assert.deepEqual(m().tieBreaks, { 0: [8, 6] });
-  await ok(rtl.post('undo', { matchId: id }, player));
-  assert.deepEqual(m().sets, [[6, 6]]);
-  assert.deepEqual(m().points, [7, 6]);
   setPosition(
     [
       [6, 4],
@@ -426,7 +419,7 @@ async function main() {
   );
   console.error = oldLog;
   console.log(
-    'PASS: optional PIN, referee/admin/player authorization, deuce/advantage, game and set transitions, both tiebreaks, undo, match finish, rotation/session revocation, independent match writes, same-match CAS, public privacy, archival isolation.',
+    'PASS: optional PIN, referee/admin/player authorization, deuce/advantage, game and set transitions, both tiebreaks, removed undo, match finish, rotation/session revocation, independent match writes, same-match CAS, public privacy, archival isolation.',
   );
 }
 main().catch((e) => {

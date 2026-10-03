@@ -1,3 +1,4 @@
+import { discardLegacyScoreHistory } from './legacy-score-data';
 import { validateCourtGroups } from './court-config';
 import { normalizeLevelName, levelNameKey, MAX_LEVELS } from './level-settings';
 import { z } from 'zod';
@@ -6,7 +7,6 @@ import { SITE_LEAGUE, LEAGUE_FEATURES } from './site-league';
 import {
   validateLevelSeeds,
   propagatePlayers,
-  normalizeLiveMatches,
   initialBoard,
   courtNumber,
   levelsForTheme,
@@ -93,7 +93,6 @@ const match = score.extend({
   codeHash: hash.optional(),
   savedCode: z.string().min(5).max(64).optional(),
   codeFormat: z.literal('pin5').optional(),
-  history: z.array(score).max(10000).optional(),
   configured: z.boolean().optional(),
   updated: z.string().max(40).optional(),
   refereeEnabled: z.boolean().optional(),
@@ -224,8 +223,9 @@ export async function exportBackup(mode: string) {
       );
     records.push({ id: 'main', data: initialBoard(SITE_LEAGUE) });
   }
-  if (!recovery)
-    for (const record of records) if (record.id === 'main') normalizeLiveMatches(record.data);
+  for (const record of records)
+    for (const level of record.data.levels)
+      for (const match of level.matches) discardLegacyScoreHistory(match);
   const createdAt = new Date().toISOString(),
     backup = {
       format: 'tennis-league-backup',
@@ -299,7 +299,6 @@ export async function restoreBackup(
     db = database(),
     token = crypto.randomUUID();
   const next = { ...backup.records.find((r) => r.id === 'main')!.data, restoreToken: token };
-  normalizeLiveMatches(next);
   // Every statement is guarded. D1 executes the whole batch atomically; a stale
   // revision cannot replace archives, recovery copies, sessions, or the main board.
   const before = exists

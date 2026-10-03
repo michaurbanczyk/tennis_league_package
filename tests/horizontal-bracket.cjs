@@ -83,7 +83,7 @@ for (const size of [4, 8, 16, 32]) {
   assert.equal(
     (live.match(/Gracz A0/g) || []).length,
     1,
-    'Undo removes withdrawn advancement from all later rounds',
+    'An unresolved source match does not advance a player',
   );
   first.sets = [[6, 6]];
   first.points = [3, 2];
@@ -104,5 +104,5 @@ assert.equal((html.match(/Anna Kowalska \/ Maria Nowak/g) || []).length, 2);
 assert(html.includes('&lt;script&gt; &amp; Kowalski'));
 assert(html.includes('Przegrany: Półfinał 2'));
 console.log(
-  'PASS: brackets for 4/8/16/32 players, advancement, undo, bronze, doubles, legacy data and safe read-only rendering.',
+  'PASS: brackets for 4/8/16/32 players, advancement, unresolved sources, bronze, doubles, legacy data and safe read-only rendering.',
 );

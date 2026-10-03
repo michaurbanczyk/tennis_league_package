@@ -60,7 +60,7 @@ export function matchElapsed(m: Match, now = Date.now()): number | null {
       ? Date.parse(m.finishedAt || '')
       : m.status === 'unfinished'
         ? Date.parse(m.unfinishedAt || '')
-        : Math.min(now, Date.parse(m.startedAt || '') + 12 * 3600000);
+        : now;
   return Number.isFinite(end) && end >= start ? end - start : null;
 }
 export function durationLabel(ms: number) {
