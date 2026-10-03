@@ -132,8 +132,12 @@ function scoreCells(match: Match, index: number) {
   if (match.status !== 'finished' && !match.sets.some((set) => set.some((value) => value > 0)))
     return [];
   return match.sets
-    .filter((set) => match.status === 'finished' || set.some((value) => value > 0))
-    .map((set) => String(set[index] ?? 0));
+    .map((set, setIndex) => ({
+      games: String(set[index] ?? 0),
+      tieBreakPoints: match.tieBreaks?.[String(setIndex)]?.[index],
+      played: match.status === 'finished' || set.some((value) => value > 0),
+    }))
+    .map((set) => (set.played ? set : null));
 }
 
 function pdfPlayerName(level: Level, match: Match, index: number) {
@@ -285,16 +289,34 @@ function drawMatch(
       if (!value) return;
       const scoreFont =
         match.status === 'finished' && match.winner === index ? font.bold : font.regular;
+      const tieSize = Math.max(4.2, nameSize * 0.53);
+      const scoreWidth = scoreFont.widthOfTextAtSize(value.games, nameSize);
+      const tieWidth =
+        value.tieBreakPoints === undefined
+          ? 0
+          : font.regular.widthOfTextAtSize(String(value.tieBreakPoints), tieSize) + 1;
+      const scoreLeft = cellX + (scoreCellWidth - scoreWidth - tieWidth) / 2;
+      const baseline = rowBottom + (rowHeight - nameSize * 0.85) / 2;
       drawText(
         page,
         font,
-        value,
-        cellX + (scoreCellWidth - scoreFont.widthOfTextAtSize(value, nameSize)) / 2,
-        rowBottom + (rowHeight - nameSize * 0.85) / 2,
+        value.games,
+        scoreLeft,
+        baseline,
         nameSize,
         NAVY,
         match.status === 'finished' && match.winner === index,
       );
+      if (value.tieBreakPoints !== undefined)
+        drawText(
+          page,
+          font,
+          String(value.tieBreakPoints),
+          scoreLeft + scoreWidth + 1,
+          baseline + nameSize * 0.48,
+          tieSize,
+          NAVY,
+        );
     });
   });
   const schedule = [dateLabel(match.date), match.time].filter(Boolean).join(' · ');

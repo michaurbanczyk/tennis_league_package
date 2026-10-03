@@ -135,12 +135,13 @@ export function refereeScope(m: Match): string {
   return `referee:${m.id}:${m.refereeToken || ''}`;
 }
 export function addPoint(m: Match, player: number, format: string): void {
-  if (!m.refereeEnabled) throw Error('Ten mecz nie ma włączonego sędziowania.');
   if (player !== 0 && player !== 1) throw Error('Wybierz zawodnika.');
   if (m.status !== 'live') throw Error('Najpierw rozpocznij mecz.');
   if (!m.players.every(Boolean)) throw Error('Poczekaj na ustalenie zawodników.');
   if (matchWinner(m.sets, format) !== null)
     throw Error('Wynik jest kompletny. Zatwierdź zakończenie meczu.');
+  if (!m.refereeEnabled && pointMode(m, format) !== 'tie-break')
+    throw Error('Punkty można wpisywać tylko podczas tie-breaka.');
   m.history ??= [];
   m.history.push(scoreSnapshot(m));
   if (m.history.length > 500) m.history.shift();
@@ -239,6 +240,8 @@ export function addScore(m: Match, player: number, format: string): void {
   if (!m.players.every(Boolean)) throw Error('Poczekaj na rozstrzygnięcie półfinałów.');
   if (matchWinner(m.sets, format) !== null)
     throw Error('Wynik jest kompletny. Zatwierdź zakończenie meczu.');
+  if (pointMode(m, format) === 'tie-break')
+    throw Error('Przy 6:6 wpisuj punkty tie-breaka, nie przyznawaj całego gema.');
   m.history ??= [];
   m.history.push(scoreSnapshot(m));
   if (m.history.length > 300) m.history.shift();

@@ -2,7 +2,7 @@ const assert = require('node:assert/strict');
 const { readFileSync, writeFileSync } = require('node:fs');
 const path = require('node:path');
 const ts = require('typescript');
-const { PDFDocument } = require('pdf-lib');
+const { PDFDocument, PDFPage } = require('pdf-lib');
 
 const root = path.resolve(__dirname, '..');
 const modules = new Map();
@@ -86,6 +86,33 @@ async function verify(level, expectedPages) {
     }
     await verify(level, size === 32 ? 3 : 1);
   }
+
+  const tieBreakLevel = makeLevel('Tie-break', 4, 'tie-break');
+  const tieBreakMatch = tieBreakLevel.matches[0];
+  tieBreakMatch.players = ['Zawodnik A', 'Zawodnik B'];
+  tieBreakMatch.status = 'finished';
+  tieBreakMatch.winner = 0;
+  tieBreakMatch.sets = [
+    [7, 6],
+    [6, 4],
+  ];
+  tieBreakMatch.tieBreaks = { 0: [13, 11] };
+  const drawnTieBreakPoints = [];
+  const originalDrawText = PDFPage.prototype.drawText;
+  PDFPage.prototype.drawText = function (text, options) {
+    if (text === '13' || text === '11') drawnTieBreakPoints.push({ text, size: options.size });
+    return originalDrawText.call(this, text, options);
+  };
+  try {
+    await verify(tieBreakLevel, 1);
+  } finally {
+    PDFPage.prototype.drawText = originalDrawText;
+  }
+  assert.deepEqual(drawnTieBreakPoints.map((item) => item.text).sort(), ['11', '13']);
+  assert(
+    drawnTieBreakPoints.every((item) => item.size < 8),
+    'Tie-break points use smaller type',
+  );
 
   const empty = makeLevel('Pusta', 4, 'empty');
   await verify(empty, 1);

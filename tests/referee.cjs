@@ -302,6 +302,27 @@ async function main() {
   assert.equal((await rtl.post('point', { matchId: id, player: 0 }, referee)).status, 401);
   await ok(rtl.post('add', { matchId: id, player: 0 }, player));
   assert.deepEqual(m().sets[2], [2, 0]);
+  // Without a referee, 6:6 is still scored point by point and can be undone.
+  setPosition([[6, 6]], [6, 6], 'classic');
+  assert.equal((await rtl.post('add', { matchId: id, player: 0 }, player)).status, 400);
+  await pt(0, player);
+  assert.deepEqual(m().sets, [[6, 6]]);
+  assert.deepEqual(m().points, [7, 6]);
+  await pt(0, player);
+  assert.deepEqual(m().sets, [[7, 6]]);
+  assert.deepEqual(m().tieBreaks, { 0: [8, 6] });
+  await ok(rtl.post('undo', { matchId: id }, player));
+  assert.deepEqual(m().sets, [[6, 6]]);
+  assert.deepEqual(m().points, [7, 6]);
+  setPosition(
+    [
+      [6, 4],
+      [4, 6],
+      [2, 0],
+    ],
+    [0, 0],
+    'classic',
+  );
   const enabled = await ok(rtl.post('referee', { matchId: id, enabled: true }, admin));
   const code3 = enabled.levels[0].matches[0].refereeCurrentCode;
   assert.notEqual(code3, refCode2);

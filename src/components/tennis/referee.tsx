@@ -149,16 +149,16 @@ export function RefereeScoring({
 
 export function RefereePoints({ match, format }: { match: Match; format: string }) {
   if (
-    !match.refereeEnabled ||
     (match.status !== 'live' && match.status !== 'unfinished') ||
-    matchWinner(match.sets, format) !== null
+    matchWinner(match.sets, format) !== null ||
+    (!match.refereeEnabled && pointMode(match, format) !== 'tie-break')
   )
     return null;
   const mode = pointMode(match, format),
     points = pointLabels(match, format);
   return (
     <p className="referee-live-points">
-      <ShieldCheck size={14} />
+      {match.refereeEnabled && <ShieldCheck size={14} />}
       <span>
         {mode === 'super'
           ? 'Super tie-break'

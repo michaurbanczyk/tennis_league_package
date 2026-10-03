@@ -7,6 +7,7 @@ import { ArrowLeft, WifiOff } from 'lucide-react';
 import {
   seededPlayerName,
   pointLabels,
+  pointMode,
   matchWinner,
   courtLabel,
   liveCourts,
@@ -46,9 +47,16 @@ function TvPrevious({ m, l }: { m: Match; l: Level }) {
                 <span
                   key={set}
                   className={!m.sets[set] ? 'tv-previous-unplayed' : undefined}
-                  aria-label={`${set === 2 && matchFormat(l, m) === 'super' ? 'Super tie-break' : `Set ${set + 1}`}: ${m.sets[set]?.[index] ?? 'nie grano'}`}
+                  aria-label={`${set === 2 && matchFormat(l, m) === 'super' ? 'Super tie-break' : `Set ${set + 1}`}: ${m.sets[set]?.[index] ?? 'nie grano'}${m.tieBreaks?.[String(set)]?.[index] === undefined ? '' : `, ${m.tieBreaks[String(set)][index]} punktów tie-breaka`}`}
                 >
-                  {m.sets[set]?.[index] ?? '–'}
+                  <span>
+                    {m.sets[set]?.[index] ?? '–'}
+                    {m.tieBreaks?.[String(set)]?.[index] !== undefined && (
+                      <sup className="tv-tiebreak-score" aria-hidden="true">
+                        {m.tieBreaks[String(set)][index]}
+                      </sup>
+                    )}
+                  </span>
                 </span>
               ))}
             </span>
@@ -68,7 +76,9 @@ function TvPrevious({ m, l }: { m: Match; l: Level }) {
   );
 }
 function TvMatch({ m, l, serverTime }: { m: Match; l: Level; serverTime?: string }) {
-  const showPoints = !!m.refereeEnabled && matchWinner(m.sets, matchFormat(l, m)) === null;
+  const showPoints =
+    matchWinner(m.sets, matchFormat(l, m)) === null &&
+    (m.refereeEnabled || pointMode(m, matchFormat(l, m)) === 'tie-break');
   return (
     <article className="tv-current-match" aria-label={`${l.name}, ${m.stage}`}>
       <div className="tv-live-heading">
@@ -98,12 +108,25 @@ function TvMatch({ m, l, serverTime }: { m: Match; l: Level; serverTime?: string
                   <span>
                     {set === 2 ? (matchFormat(l, m) === 'super' ? 'STB' : 'S3') : `S${set + 1}`}
                   </span>
-                  <strong>{m.sets[set]?.[index] ?? '–'}</strong>
+                  <strong
+                    aria-label={
+                      m.tieBreaks?.[String(set)]?.[index] === undefined
+                        ? undefined
+                        : `${m.sets[set]?.[index]} gemów, ${m.tieBreaks[String(set)][index]} punktów tie-breaka`
+                    }
+                  >
+                    {m.sets[set]?.[index] ?? '–'}
+                    {m.tieBreaks?.[String(set)]?.[index] !== undefined && (
+                      <sup className="tv-tiebreak-score" aria-hidden="true">
+                        {m.tieBreaks[String(set)][index]}
+                      </sup>
+                    )}
+                  </strong>
                 </div>
               ))}
               {showPoints && (
                 <div className="tv-set-score tv-game-points">
-                  <span>Pkt</span>
+                  <span>{pointMode(m, matchFormat(l, m)) === 'tie-break' ? 'TB' : 'Pkt'}</span>
                   <strong>{pointLabels(m, matchFormat(l, m))[index]}</strong>
                 </div>
               )}

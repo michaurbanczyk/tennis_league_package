@@ -312,7 +312,6 @@ export default function Home() {
       l.bracketConfigured ||
       entryMatches(l).some((m) => m.players.some((p) => p.trim())),
   );
-  const resultMatchCount = resultLevels.reduce((count, l) => count + l.matches.length, 0);
   const activeLevelFilter = resultLevels.some((l) => l.id === filter) ? filter : 'all';
   const customSeason = isRtl || (!!data.season && !numberedSeason.test(data.season));
   useEffect(() => {
@@ -443,9 +442,10 @@ export default function Home() {
       const l = b.levels.find((l) => l.id === level?.id)!;
       const m = l.matches.find((m) => m.id === match.id)!;
       try {
-        const { addScore, startMatch, undoScore } = await import('@/lib/tennis');
+        const { addPoint, addScore, startMatch, undoScore } = await import('@/lib/tennis');
         if (action === 'start') startMatch(m);
         if (action === 'add') addScore(m, player!, l.format);
+        if (action === 'point') addPoint(m, player!, l.format);
         if (action === 'undo') undoScore(m);
         if (action === 'finish') {
           m.history ??= [];
@@ -961,7 +961,6 @@ export default function Home() {
           cardProps={cardProps}
           isDemo={isDemo}
           archiveId={selectedArchive}
-          resultMatchCount={resultMatchCount}
           activeLevelFilter={activeLevelFilter}
           setFilter={setFilter}
           resultLevels={resultLevels}

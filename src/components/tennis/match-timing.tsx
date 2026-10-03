@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { CalendarDays, Clock3, Flag, Play, Timer } from 'lucide-react';
-import { dateLabel, type Match } from '@/lib/tennis';
+import type { Match } from '@/lib/tennis';
 import {
   actualStart,
   durationLabel,
@@ -9,6 +9,12 @@ import {
   localMatchTime,
   matchElapsed,
 } from '@/lib/match-timing';
+
+function shortDate(value: string) {
+  const [year, month, day] = value.split('-');
+  return year && month && day ? `${day}.${month}.${year.slice(-2)}` : value;
+}
+
 export function MatchTiming({
   match: m,
   serverTime,
@@ -42,12 +48,12 @@ export function MatchTiming({
         <div className="tv-time-details">
           {m.time && (
             <div>
-              <span>Planowany start</span>
+              <span title="Planowany start">Plan</span>
               <strong>{m.time}</strong>
             </div>
           )}
           <div>
-            <span>Godzina rozpoczęcia</span>
+            <span>Godz. rozpoczęcia</span>
             <strong>{start === null ? '—' : localMatchTime(start)}</strong>
           </div>
         </div>
@@ -63,7 +69,7 @@ export function MatchTiming({
         <span title="Data meczu">
           <CalendarDays aria-hidden="true" size={13} /> Data
         </span>
-        <strong>{m.date ? dateLabel(m.date) : 'Do ustalenia'}</strong>
+        <strong>{m.date ? shortDate(m.date) : 'Do ustalenia'}</strong>
       </div>
       <div className="match-timing-item">
         <span title="Planowany start">
@@ -77,7 +83,7 @@ export function MatchTiming({
         </span>
         <strong>{start === null ? '—' : localMatchTime(start)}</strong>
         {start !== null && m.date && localMatchDate(start) !== m.date && (
-          <small>{localMatchDate(start)}</small>
+          <small>{shortDate(localMatchDate(start))}</small>
         )}
       </div>
       <div className="match-timing-item">
@@ -94,7 +100,7 @@ export function MatchTiming({
         </span>
         <strong>{m.status === 'finished' ? m.finishedTime || '—' : '—'}</strong>
         {end && start !== null && localMatchDate(end) !== localMatchDate(start) ? (
-          <small>{localMatchDate(end)}</small>
+          <small>{shortDate(localMatchDate(end))}</small>
         ) : null}
       </div>
     </div>

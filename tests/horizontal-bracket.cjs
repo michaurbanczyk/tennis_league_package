@@ -39,6 +39,7 @@ for (const size of [4, 8, 16, 32]) {
   assert.equal((initial.match(/data-bracket-match=/g) || []).length, size);
   assert(initial.includes('O 3. miejsce'));
   assert(!initial.includes('S1'));
+  assert(!initial.includes('knockout-scores'), 'Scheduled matches have no result yet');
   for (const round of bracketRounds(level).filter((r) => r.size > 0)) {
     for (const match of round.matches) {
       match.status = 'finished';
@@ -52,6 +53,15 @@ for (const size of [4, 8, 16, 32]) {
     assert(html.includes('knockout-winner'));
   }
   const completed = render(level);
+  assert(completed.includes('Wynik setów: 6, 6'));
+  assert(completed.includes('Wynik setów: 3, 4'));
+  level.matches[0].sets[0] = [7, 6];
+  level.matches[0].tieBreaks = { 0: [8, 6] };
+  const tieBreak = render(level);
+  assert(tieBreak.includes('knockout-tiebreak-score">8</sup>'));
+  assert(tieBreak.includes('knockout-tiebreak-score">6</sup>'));
+  assert(tieBreak.includes('tie-break 8'), 'Tie-break points are available to screen readers');
+  assert(!completed.includes('knockout-check'), 'The winner is marked by the highlighted row');
   assert.equal(
     (completed.match(/Gracz A0/g) || []).length,
     Math.log2(size),
@@ -65,11 +75,21 @@ for (const size of [4, 8, 16, 32]) {
   const first = level.matches[0];
   first.status = 'live';
   first.winner = null;
+  first.sets = [[2, 1]];
+  first.tieBreaks = {};
+  const live = render(level);
+  assert(!live.includes('Wynik setów: 2'), 'A live match has no visible score in the bracket');
+  assert(!live.includes('Wynik setów: 1'), 'Neither live player has a visible score');
   assert.equal(
-    (render(level).match(/Gracz A0/g) || []).length,
+    (live.match(/Gracz A0/g) || []).length,
     1,
     'Undo removes withdrawn advancement from all later rounds',
   );
+  first.sets = [[6, 6]];
+  first.points = [3, 2];
+  const liveTieBreak = render(level);
+  assert(!liveTieBreak.includes('TB 3'), 'Live tie-break points stay off the bracket');
+  assert(!liveTieBreak.includes('TB 2'));
 }
 const legacy = makeLevel('Deblowe Pro', 4);
 legacy.matches.forEach((m) => {

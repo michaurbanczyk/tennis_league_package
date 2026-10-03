@@ -110,7 +110,15 @@ export function ScoreEditor({
                   <span key={i}>
                     {i === 2 && scoringFormat === 'super' ? 'STB' : `Set ${i + 1}`}{' '}
                     <strong>
-                      {s[0]} : {s[1]}
+                      {s[0]}
+                      {match.tieBreaks?.[String(i)]?.[0] !== undefined && (
+                        <sup className="result-tiebreak-score">{match.tieBreaks[String(i)][0]}</sup>
+                      )}
+                      {' : '}
+                      {s[1]}
+                      {match.tieBreaks?.[String(i)]?.[1] !== undefined && (
+                        <sup className="result-tiebreak-score">{match.tieBreaks[String(i)][1]}</sup>
+                      )}
                     </strong>
                   </span>
                 ))}
@@ -222,7 +230,7 @@ export function ScoreEditor({
                       : superTB
                         ? 'Super tie-break: wpisuj punkty, do 10 z przewagą 2.'
                         : tieBreak
-                          ? '6:6 — po tie-breaku wskaż jego zwycięzcę.'
+                          ? 'Tie-break: wpisuj punkty, do 7 z przewagą 2.'
                           : 'Po zakończonym gemie kliknij zwycięzcę.'}
                 </div>
                 <div className="scoring-grid">
@@ -232,16 +240,22 @@ export function ScoreEditor({
                         {seededPlayerName(match, i) ||
                           `${match.stage === 'O 3. miejsce' ? 'Przegrany' : 'Zwycięzca'} półfinału ${i + 1}`}
                       </span>
-                      <strong>{newSet ? 0 : current?.[i]}</strong>
+                      <strong>
+                        {tieBreak
+                          ? pointLabels(match, scoringFormat)[i]
+                          : newSet
+                            ? 0
+                            : current?.[i]}
+                      </strong>
                       <button
                         className="button lime"
                         disabled={
                           busy || ready || !match.players.every(Boolean) || (!online && !demoEdit)
                         }
-                        onClick={() => score('add', i)}
+                        onClick={() => score(tieBreak ? 'point' : 'add', i)}
                       >
                         <Plus size={21} />
-                        {superTB ? 'Punkt' : tieBreak ? 'Tie-break' : 'Gem'}
+                        {superTB || tieBreak ? 'Punkt' : 'Gem'}
                       </button>
                     </div>
                   ))}

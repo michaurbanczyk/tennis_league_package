@@ -28,7 +28,6 @@ export function ResultsView({
   cardProps,
   isDemo,
   archiveId,
-  resultMatchCount,
   activeLevelFilter,
   setFilter,
   resultLevels,
@@ -37,7 +36,6 @@ export function ResultsView({
 }: BaseProps & {
   isDemo: boolean;
   archiveId?: string;
-  resultMatchCount: number;
   activeLevelFilter: string;
   setFilter: (value: string) => void;
   resultLevels: Level[];
@@ -49,9 +47,7 @@ export function ResultsView({
       {view === 'results' && (
         <>
           <div className="results-top">
-            <h2>
-              Drabinki <span>{isDemo ? 'Podgląd' : resultMatchCount + ' meczów'}</span>
-            </h2>
+            <h2>Drabinki {isDemo && <span>Podgląd</span>}</h2>
           </div>
           <Tabs value={activeLevelFilter} onValueChange={setFilter} className="level-tabs">
             <TabsList aria-label="Poziom rozgrywek">
@@ -80,9 +76,6 @@ export function ResultsView({
                 <section className="level-section" key={l.id}>
                   <div className="level-title">
                     <div>
-                      <span className="level-icon">
-                        <Trophy size={17} />
-                      </span>
                       <h3>{l.name}</h3>
                       {board.theme === 'relaksmisja' && (
                         <BracketPdfButton
@@ -128,6 +121,9 @@ export function ResultsView({
                         level={l}
                         onEdit={admin ? (m) => open('details', m.id) : undefined}
                       />
+                      <div className="match-cards-divider">
+                        <h4 className="level-section-subheading">Szczegóły meczów</h4>
+                      </div>
                       {(l.startSize || 4) === 4 ? (
                         <div className="bracket-layout">
                           <div className="semis">

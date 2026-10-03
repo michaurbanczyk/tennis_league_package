@@ -61,12 +61,13 @@ export function MatchCard({
 }: MatchCardProps) {
   const waiting = !m.players.every(Boolean),
     showPoints =
-      !!m.refereeEnabled &&
       (m.status === 'live' || m.status === 'unfinished') &&
-      matchWinner(m.sets, matchFormat(l, m)) === null;
+      matchWinner(m.sets, matchFormat(l, m)) === null &&
+      (m.refereeEnabled || pointMode(m, matchFormat(l, m)) === 'tie-break'),
+    tieBreakInProgress = showPoints && pointMode(m, matchFormat(l, m)) === 'tie-break';
   return (
     <article
-      className={`match-card ${showPoints ? 'point-scored' : ''} ${m.status === 'live' ? 'active-match' : ''} ${final ? 'final-card' : ''}`}
+      className={`match-card ${showPoints ? 'point-scored' : ''} ${tieBreakInProgress ? 'tie-break-scored' : ''} ${m.status === 'live' ? 'active-match' : ''} ${final ? 'final-card' : ''}`}
     >
       <>
         {final && (
@@ -136,14 +137,27 @@ export function MatchCard({
             </span>
           </div>
           <div className="numbers">
-            {[0, 1, 2].map((s) => (
-              <span
-                key={s}
-                className={`${m.sets[s] && setWinner(m.sets[s], matchFormat(l, m) === 'super' && s === 2) === i ? 'won-set' : ''} ${s === m.sets.length - 1 && m.status === 'live' ? 'current-set' : ''}`}
-              >
-                {waiting ? '–' : (m.sets[s]?.[i] ?? '–')}
-              </span>
-            ))}
+            {[0, 1, 2].map((s) => {
+              const tieBreakPoints = m.tieBreaks?.[String(s)]?.[i];
+              return (
+                <span
+                  key={s}
+                  className={`${m.sets[s] && setWinner(m.sets[s], matchFormat(l, m) === 'super' && s === 2) === i ? 'won-set' : ''} ${s === m.sets.length - 1 && m.status === 'live' ? 'current-set' : ''}`}
+                  aria-label={
+                    tieBreakPoints === undefined
+                      ? undefined
+                      : `Set ${s + 1}: ${m.sets[s][i]} gemów, ${tieBreakPoints} punktów tie-breaka`
+                  }
+                >
+                  {waiting ? '–' : (m.sets[s]?.[i] ?? '–')}
+                  {!waiting && tieBreakPoints !== undefined && (
+                    <sup className="set-tiebreak-score" aria-hidden="true">
+                      {tieBreakPoints}
+                    </sup>
+                  )}
+                </span>
+              );
+            })}
             {showPoints && (
               <span className="point-column-value">{pointLabels(m, matchFormat(l, m))[i]}</span>
             )}
@@ -182,9 +196,16 @@ export function MatchCard({
               </button>
             )}
             {admin && !isDemo && (
-              <div className="match-code" aria-label="Kod meczu">
-                <span>Kod meczu</span>
-                <code>{m.currentCode || '—'}</code>
+              <div
+                className="match-code"
+                aria-label={m.refereeEnabled ? 'Kod sędziego' : 'Kod meczu'}
+              >
+                <span>{m.refereeEnabled ? 'Kod sędziego' : 'Kod meczu'}</span>
+                <code>
+                  {m.refereeEnabled
+                    ? m.refereeCurrentCode || m.refereeSavedCode || '—'
+                    : m.currentCode || '—'}
+                </code>
               </div>
             )}
           </div>

@@ -254,7 +254,29 @@ body[data-league='relaksmisja'] .text-button,
 body[data-league='relaksmisja'] .season-management-trigger {
   color: #363636;
 }
-body[data-league='relaksmisja'] .level-icon,
+body[data-league='relaksmisja'] .level-section {
+  border: 1px solid #d9e1e8;
+  border-radius: 8px;
+  background: #fff;
+  padding: 20px 22px 24px;
+}
+body[data-league='relaksmisja'] .level-title h3 {
+  font-weight: 700;
+}
+body[data-league='relaksmisja'] .match-cards-divider {
+  border-top-color: #d9e1e8;
+}
+body[data-league='relaksmisja'] .level-section-subheading::before {
+  background: #eb7626;
+}
+body[data-league='relaksmisja'] .level-section-subheading {
+  color: #1e2d59;
+}
+@media (max-width: 700px) {
+  body[data-league='relaksmisja'] .level-section {
+    padding: 14px 12px 18px;
+  }
+}
 body[data-league='relaksmisja'] .overview-icon,
 body[data-league='relaksmisja'] .stack-form legend,
 body[data-league='relaksmisja'] .score-labels > span,
@@ -277,9 +299,23 @@ body[data-league='relaksmisja'] .schedule-day > h3 {
 body[data-league='relaksmisja']
   .schedule-date-tabs
   [data-slot='tabs-trigger'][data-state='active'] {
-  background: #fff2e8 !important;
-  color: #8c3a08;
-  border-color: #eb7626;
+  background: #eaf0f8 !important;
+  color: #1e2d59;
+  border-color: #8ca7c8;
+}
+body[data-league='relaksmisja']
+  .schedule-date-tabs
+  .court-filter-tabs
+  [data-slot='tabs-trigger'][data-state='active'] {
+  border: 0;
+  border-bottom: 4px solid #516d98;
+  background: #eaf0f8 !important;
+}
+body[data-league='relaksmisja']
+  .schedule-date-tabs
+  .court-filter-tabs
+  [data-slot='tabs-trigger']:focus-visible {
+  outline-color: #516d98;
 }
 body[data-league='relaksmisja'] .overview {
   background: #f3f3f3;
@@ -673,6 +709,17 @@ body[data-league='relaksmisja'] .season-form > .season-name-field {
   background: #fff0e4;
   border-radius: 4px;
   font-weight: 600;
+}
+.numbers .set-tiebreak-score {
+  align-self: flex-start;
+  margin-top: 5px;
+  margin-left: 1px;
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 600;
+}
+.tie-break-scored .numbers .point-column-value {
+  font-size: 13px;
 }
 .score-labels .point-column-label {
   color: #994408;

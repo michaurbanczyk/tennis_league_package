@@ -79,6 +79,7 @@ export function HorizontalBracket({
   }, [displayLevel]);
 
   function matchNode(match: Match) {
+    const showScore = match.status === 'finished' && match.players.every(Boolean);
     return (
       <div
         className={`knockout-match${onEdit && incompleteMatch(level, match) ? ' knockout-incomplete' : ''}`}
@@ -89,6 +90,12 @@ export function HorizontalBracket({
         {[0, 1].map((index) => {
           const player = match.players[index],
             winner = match.status === 'finished' && match.winner === index;
+          const scoreLabel = match.sets
+            .map((set, setIndex) => {
+              const points = match.tieBreaks?.[String(setIndex)]?.[index];
+              return `${set[index]}${points === undefined ? '' : ` (tie-break ${points})`}`;
+            })
+            .join(', ');
           return (
             <div
               key={index}
@@ -97,9 +104,19 @@ export function HorizontalBracket({
               <span>
                 {seededPlayerName(match, index) || playerPlaceholder(displayLevel, match, index)}
               </span>
-              {winner && (
-                <span className="knockout-check" role="img" aria-label="Zwycięzca">
-                  ✓
+              {showScore && (
+                <span className="knockout-scores" aria-label={`Wynik setów: ${scoreLabel}`}>
+                  {match.sets.map((set, setIndex) => {
+                    const tieBreakPoints = match.tieBreaks?.[String(setIndex)]?.[index];
+                    return (
+                      <span key={setIndex} aria-hidden="true">
+                        {set[index]}
+                        {tieBreakPoints !== undefined && (
+                          <sup className="knockout-tiebreak-score">{tieBreakPoints}</sup>
+                        )}
+                      </span>
+                    );
+                  })}
                 </span>
               )}
             </div>
@@ -124,7 +141,9 @@ export function HorizontalBracket({
   return (
     <section className="knockout-section" aria-labelledby={headingId}>
       <div className="knockout-heading">
-        <h4 id={headingId}>Drabinka pucharowa</h4>
+        <h4 id={headingId} className="level-section-subheading">
+          Drabinka pucharowa
+        </h4>
         <span>Awans po zakończeniu meczu</span>
       </div>
       <div
